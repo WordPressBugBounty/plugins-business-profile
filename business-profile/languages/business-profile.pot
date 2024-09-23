@@ -1,0 +1,1134 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Five Star Business Profile and Schema\n"
+"POT-Creation-Date: 2023-03-14 15:41-0400\n"
+"PO-Revision-Date: 2020-10-13 16:13-0400\n"
+"Last-Translator: \n"
+"Language-Team: Five Star Plugins\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: assets/js/block-contact-card.js:8 includes/class-contact-card-widget.php:56
+#: includes/patterns/contact-card.php:6
+msgid "Contact Card"
+msgstr ""
+
+#: assets/js/block-contact-card.js:72
+msgid "Select a Location"
+msgstr ""
+
+#: assets/js/block-contact-card.js:79 includes/class-contact-card-widget.php:39
+msgid "Show Name"
+msgstr ""
+
+#: assets/js/block-contact-card.js:84 includes/class-contact-card-widget.php:40
+msgid "Show Address"
+msgstr ""
+
+#: assets/js/block-contact-card.js:89 includes/class-contact-card-widget.php:41
+msgid "Show link to get directions on Google Maps"
+msgstr ""
+
+#: assets/js/block-contact-card.js:94 includes/class-contact-card-widget.php:42
+msgid "Show Phone number"
+msgstr ""
+
+#: assets/js/block-contact-card.js:99 includes/class-contact-card-widget.php:43
+msgid "Show Cell phone number"
+msgstr ""
+
+#: assets/js/block-contact-card.js:104
+#: includes/class-contact-card-widget.php:44
+msgid "Show Whatsapp"
+msgstr ""
+
+#: assets/js/block-contact-card.js:109
+#: includes/class-contact-card-widget.php:45
+msgid "Show Fax number"
+msgstr ""
+
+#: assets/js/block-contact-card.js:114
+#: includes/class-contact-card-widget.php:47
+msgid "Show contact details"
+msgstr ""
+
+#: assets/js/block-contact-card.js:119
+#: includes/class-contact-card-widget.php:48
+msgid "Show Opening Hours"
+msgstr ""
+
+#: assets/js/block-contact-card.js:124
+#: includes/class-contact-card-widget.php:49
+msgid "Show brief opening hours on one line"
+msgstr ""
+
+#: assets/js/block-contact-card.js:129
+#: includes/class-contact-card-widget.php:50
+msgid "Show Google Map"
+msgstr ""
+
+#: business-profile.php:79 business-profile.php:80
+msgid "Business Profile"
+msgstr ""
+
+#: business-profile.php:302
+msgid "MENU"
+msgstr ""
+
+#: business-profile.php:303
+msgid "Dashboard"
+msgstr ""
+
+#: business-profile.php:305 includes/class-custom-post-types.php:83
+#: includes/class-custom-post-types.php:85
+#: includes/class-custom-post-types.php:86
+#: includes/class-custom-post-types.php:96
+msgid "Locations"
+msgstr ""
+
+#: business-profile.php:307 includes/class-custom-post-types.php:116
+#: includes/class-custom-post-types.php:118
+#: includes/class-custom-post-types.php:119
+#: includes/class-custom-post-types.php:129
+msgid "Schemas"
+msgstr ""
+
+#: business-profile.php:308 includes/class-settings.php:335
+#: includes/class-settings.php:336
+msgid "Settings"
+msgstr ""
+
+#: business-profile.php:310 includes/class-admin-custom-fields.php:58
+#: includes/class-custom-post-types.php:263 includes/class-settings.php:95
+msgid "Custom Fields"
+msgstr ""
+
+#: business-profile.php:376
+msgid "Try Premium"
+msgstr ""
+
+#: business-profile.php:380
+msgid "View the help documentation for Business Profile"
+msgstr ""
+
+#: business-profile.php:381
+msgid "Help"
+msgstr ""
+
+#: business-profile.php:447
+msgid ""
+"You're using the Five-Star Business Profile premium version, but the premium "
+"helper plugin is not active."
+msgstr ""
+
+#: business-profile.php:449
+#, php-format
+msgid ""
+"Please re-activate the helper plugin, or <a target='_blank' "
+"href='%s'>download and install it</a> if the plugin is no longer installed "
+"to ensure continued access to the premium features of the plugin."
+msgstr ""
+
+#: business-profile.php:467 includes/class-helper.php:45
+#, php-format
+msgid "You have been logged out. Please %slogin again%s."
+msgstr ""
+
+#: includes/class-about-us.php:51
+msgid "Who We Are"
+msgstr ""
+
+#: includes/class-about-us.php:55
+msgid "Lite vs. Premium"
+msgstr ""
+
+#: includes/class-about-us.php:59
+msgid "Getting Started"
+msgstr ""
+
+#: includes/class-about-us.php:63
+msgid "Suggest a Feature"
+msgstr ""
+
+#: includes/class-about-us.php:86
+msgid ""
+"The premium version of the plugin includes several advanced features, such "
+"as automatic structured data for posts, drag-and-drop re-ordering for "
+"contact card elements, access to the Five Star Restaurant Manager mobile app "
+"and more!"
+msgstr ""
+
+#: includes/class-about-us.php:88
+msgid ""
+"Turn on the included <strong>WooCommerce product integration</strong> to "
+"automatically add structured data to your products."
+msgstr ""
+
+#: includes/class-about-us.php:90
+msgid ""
+"The following table provides a comparison of the lite and premium versions."
+msgstr ""
+
+#: includes/class-about-us.php:94
+msgid "Feature"
+msgstr ""
+
+#: includes/class-about-us.php:95
+msgid "Lite Version"
+msgstr ""
+
+#: includes/class-about-us.php:96
+msgid "Premium Version"
+msgstr ""
+
+#: includes/class-about-us.php:99
+msgid "Add a contact card to any page on your site"
+msgstr ""
+
+#: includes/class-about-us.php:104
+msgid ""
+"Gutenberg block, patterns and shortcodes to choose exactly what to display"
+msgstr ""
+
+#: includes/class-about-us.php:109
+msgid "Multiple location support"
+msgstr ""
+
+#: includes/class-about-us.php:114
+msgid ""
+"Create schema rules to add structured data to any or every page on your site"
+msgstr ""
+
+#: includes/class-about-us.php:119
+msgid "Google Maps structured data support"
+msgstr ""
+
+#: includes/class-about-us.php:124
+msgid "Add separate phone, mobile and WhatsApp numbers"
+msgstr ""
+
+#: includes/class-about-us.php:129
+msgid "Automatic WooCommerce structured data for your products"
+msgstr ""
+
+#: includes/class-about-us.php:134
+msgid "Automatically add structured data to posts"
+msgstr ""
+
+#: includes/class-about-us.php:139
+msgid "Drag and drop re-ordering for contact card elements"
+msgstr ""
+
+#: includes/class-about-us.php:144
+msgid "Easy-to-insert defaults for schema rule parameters"
+msgstr ""
+
+#: includes/class-about-us.php:149
+msgid ""
+"Access to the Five Star Restaurant Manager mobile app to update your "
+"business info on the go"
+msgstr ""
+
+#: includes/class-about-us.php:155
+#, php-format
+msgid ""
+"<a href=\"%s\" target=\"_blank\" class=\"bpfwp-about-us-tab-button bpfwp-"
+"about-us-tab-button-purchase\">Buy Premium Version</a>"
+msgstr ""
+
+#: includes/class-about-us.php:161
+msgid ""
+"The walk-though that ran when you first activated the plugin offers a quick "
+"way to get started with setting it up. If you would like to run through it "
+"again, just click the button below"
+msgstr ""
+
+#: includes/class-about-us.php:163
+#, php-format
+msgid ""
+"<a href=\"%s\" class=\"bpfwp-about-us-tab-button bpfwp-about-us-tab-button-"
+"walkthrough\">Re-Run Walk-Through</a>"
+msgstr ""
+
+#: includes/class-about-us.php:165
+msgid ""
+"We also have a series of video tutorials that cover the available settings "
+"as well as key features of the plugin."
+msgstr ""
+
+#: includes/class-about-us.php:167
+#, php-format
+msgid ""
+"<a href=\"%s\" target=\"_blank\" class=\"bpfwp-about-us-tab-button bpfwp-"
+"about-us-tab-button-youtube\">YouTube Playlist</a>"
+msgstr ""
+
+#: includes/class-about-us.php:176
+msgid ""
+"You can use the form below to let us know about a feature suggestion you "
+"might have."
+msgstr ""
+
+#: includes/class-about-us.php:178
+msgid "Please describe your feature idea..."
+msgstr ""
+
+#: includes/class-about-us.php:182 includes/class-review-ask.php:57
+#: includes/patterns/email.php:6
+msgid "Email Address"
+msgstr ""
+
+#: includes/class-admin-custom-fields.php:70
+msgid ""
+"These global custom field values are used for the main contact card, or if a "
+"custom field value isn't set for a particular location."
+msgstr ""
+
+#: includes/class-admin-custom-fields.php:148
+#: includes/class-custom-post-types.php:669
+msgid "Current File:"
+msgstr ""
+
+#: includes/class-admin-custom-fields.php:169
+msgid "Save Fields"
+msgstr ""
+
+#: includes/class-blocks.php:156
+msgid "Use the main Business Profile"
+msgstr ""
+
+#: includes/class-blocks.php:188
+msgid "Five Star Business Profile and Schema"
+msgstr ""
+
+#: includes/class-contact-card-widget.php:46
+msgid "Show Ordering Link"
+msgstr ""
+
+#: includes/class-contact-card-widget.php:57
+msgid ""
+"Display a contact card with your name, address, phone number, opening hours "
+"and map."
+msgstr ""
+
+#: includes/class-contact-card-widget.php:96
+msgid "Title"
+msgstr ""
+
+#: includes/class-contact-card-widget.php:122
+#: includes/class-custom-post-types.php:84 includes/class-dashboard.php:131
+msgid "Location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:87
+#: includes/class-custom-post-types.php:120
+msgid "Add New"
+msgstr ""
+
+#: includes/class-custom-post-types.php:88
+msgid "Add New Location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:89
+msgid "Edit Location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:90
+msgid "New Location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:91
+msgid "View Location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:92
+msgid "View Locations"
+msgstr ""
+
+#: includes/class-custom-post-types.php:93
+msgid "Search Locations"
+msgstr ""
+
+#: includes/class-custom-post-types.php:94
+msgid "No locations found"
+msgstr ""
+
+#: includes/class-custom-post-types.php:95
+msgid "No locations found in trash"
+msgstr ""
+
+#: includes/class-custom-post-types.php:117
+msgid "Schema"
+msgstr ""
+
+#: includes/class-custom-post-types.php:121
+msgid "Add New Schema"
+msgstr ""
+
+#: includes/class-custom-post-types.php:122
+msgid "Edit Schema"
+msgstr ""
+
+#: includes/class-custom-post-types.php:123
+msgid "New Schema"
+msgstr ""
+
+#: includes/class-custom-post-types.php:124
+msgid "View Schema"
+msgstr ""
+
+#: includes/class-custom-post-types.php:125
+msgid "View Schemas"
+msgstr ""
+
+#: includes/class-custom-post-types.php:126
+msgid "Search Schemas"
+msgstr ""
+
+#: includes/class-custom-post-types.php:127
+msgid "No schemas found"
+msgstr ""
+
+#: includes/class-custom-post-types.php:128
+msgid "No schemas found in trash"
+msgstr ""
+
+#: includes/class-custom-post-types.php:208 includes/class-settings.php:367
+msgid "Schema Type"
+msgstr ""
+
+#: includes/class-custom-post-types.php:219
+msgid "Contact Details"
+msgstr ""
+
+#: includes/class-custom-post-types.php:229
+#: includes/class-custom-post-types.php:877
+#: includes/class-installation-walkthrough.php:33
+#: includes/class-settings.php:92 includes/class-settings.php:101
+#: includes/class-settings.php:673 includes/patterns/hours.php:6
+msgid "Opening Hours"
+msgstr ""
+
+#: includes/class-custom-post-types.php:239
+#: includes/class-custom-post-types.php:935 includes/class-settings.php:91
+#: includes/class-settings.php:725
+msgid "Exceptions"
+msgstr ""
+
+#: includes/class-custom-post-types.php:249
+msgid "Schema Details"
+msgstr ""
+
+#: includes/class-custom-post-types.php:367 includes/class-settings.php:450
+msgid "No map coordinates set."
+msgstr ""
+
+#: includes/class-custom-post-types.php:369 includes/class-settings.php:451
+msgid "Requesting new coordinates"
+msgstr ""
+
+#: includes/class-custom-post-types.php:370 includes/class-settings.php:452
+msgid "Select a match below"
+msgstr ""
+
+#: includes/class-custom-post-types.php:371 includes/class-settings.php:453
+msgid "View"
+msgstr ""
+
+#: includes/class-custom-post-types.php:372 includes/class-settings.php:457
+msgid "Error"
+msgstr ""
+
+#: includes/class-custom-post-types.php:373 includes/class-settings.php:458
+msgid ""
+"Invalid request. Be sure to fill out the address field before retrieving "
+"coordinates."
+msgstr ""
+
+#: includes/class-custom-post-types.php:374 includes/class-settings.php:459
+msgid "Request denied."
+msgstr ""
+
+#: includes/class-custom-post-types.php:375 includes/class-settings.php:460
+msgid "Request denied because you are over your request quota."
+msgstr ""
+
+#: includes/class-custom-post-types.php:376
+msgid "Nothing was found at that address."
+msgstr ""
+
+#: includes/class-custom-post-types.php:450
+msgid ""
+"The URL of your ordering or menu page, if it's specific to this location"
+msgstr ""
+
+#: includes/class-custom-post-types.php:570
+msgid "Disable Settings Page Exceptions"
+msgstr ""
+
+#: includes/class-custom-post-types.php:571
+msgid ""
+"By default, the exceptions from the settings page are displayed for any "
+"locations without exceptions set. Check this box to prevent this behaviour."
+msgstr ""
+
+#: includes/class-custom-post-types.php:745
+msgid "Post Type"
+msgstr ""
+
+#: includes/class-custom-post-types.php:746
+msgid "Post"
+msgstr ""
+
+#: includes/class-custom-post-types.php:747
+msgid "Page"
+msgstr ""
+
+#: includes/class-custom-post-types.php:749
+msgid "Post Category"
+msgstr ""
+
+#: includes/class-custom-post-types.php:750
+msgid "Taxonomy"
+msgstr ""
+
+#: includes/class-custom-post-types.php:751
+msgid "Page Template"
+msgstr ""
+
+#: includes/class-custom-post-types.php:752
+msgid "Global"
+msgstr ""
+
+#: includes/class-custom-post-types.php:878
+#: includes/class-installation-walkthrough.php:34
+#: includes/class-settings.php:674
+msgid "Define your weekly opening hours by adding scheduling rules."
+msgstr ""
+
+#: includes/class-custom-post-types.php:893
+#: includes/class-installation-walkthrough.php:49
+#: includes/class-settings.php:689
+msgid "Add another opening time"
+msgstr ""
+
+#: includes/class-custom-post-types.php:907
+#: includes/class-custom-post-types.php:956
+#: includes/class-installation-walkthrough.php:63
+#: includes/class-settings.php:703 includes/class-settings.php:746
+msgid "Delete scheduling rule"
+msgstr ""
+
+#: includes/class-custom-post-types.php:936
+msgid ""
+"Define special opening hours for holidays, events or other needs. Leave the "
+"time empty if you're closed all day."
+msgstr ""
+
+#: includes/class-custom-post-types.php:942 includes/class-settings.php:732
+msgid "Add another exception"
+msgstr ""
+
+#: includes/class-dashboard.php:81
+#, php-format
+msgid ""
+"<a href=\"%s\" target=\"_blank\">Visit our website</a> to learn how to "
+"upgrade to premium."
+msgstr ""
+
+#: includes/class-dashboard.php:146
+msgid ""
+"No Locations to display yet. Create a location for it to be displayed here."
+msgstr ""
+
+#: includes/class-dashboard.php:243
+#, php-format
+msgid ""
+"<a href=\"%s\" target=\"_blank\">Visit our website</a> to learn how to get a "
+"free 7-day trial of the premium plugin."
+msgstr ""
+
+#: includes/class-deactivation-survey.php:58
+msgid "Quick Feedback"
+msgstr ""
+
+#: includes/class-deactivation-survey.php:59
+msgid ""
+"If you have a moment, please share why you are deactivating Five-Star "
+"Business Profile:"
+msgstr ""
+
+#: includes/class-deactivation-survey.php:74
+msgid "Submit and Deactivate"
+msgstr ""
+
+#: includes/class-deactivation-survey.php:75
+msgid "Skip and Deactivate"
+msgstr ""
+
+#: includes/class-helper.php:59
+msgid ""
+"The request has been rejected because it does not appear to have come from "
+"this site."
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:227
+msgid "Welcome to the Five Star Business Profile and Schema"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:228
+msgid ""
+"Thanks for choosing the Five Star Business Profile and Schema! The following "
+"will help you get started with the setup of the plugin by creating a contact "
+"page, menu items and menu page, as well as configuring a few key options."
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:233
+msgid "1. Add a Contact Page"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:235
+msgid ""
+"You can create a dedicated contact page below, or skip this step and add "
+"your contact schema to a page you've already created manually."
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:237
+msgid "Page Title:"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:238
+msgid "Create Page"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:241
+#: includes/class-installation-walkthrough.php:278
+#: includes/class-installation-walkthrough.php:294
+msgid "Next Step"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:247
+msgid "2. Set Contact Information"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:249
+msgid ""
+"Set the information that will be displayed on your contact page and in the "
+"contact schema for your business"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:275
+msgid "Set Contact Information"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:279
+#: includes/class-installation-walkthrough.php:295
+#: includes/class-installation-walkthrough.php:308
+msgid "Previous Step"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:285
+msgid "3. Set Opening Hours"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:291
+msgid "Set Hours"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:301
+msgid "4. Create a Schema"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:303
+msgid ""
+"You can create a schema for items such as blog posts, products, FAQs, etc., "
+"or you can create multiple schema later."
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:305
+msgid "Create a schema now"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:309
+msgid "Finish"
+msgstr ""
+
+#: includes/class-installation-walkthrough.php:315
+msgid "Skip Setup"
+msgstr ""
+
+#: includes/class-patterns.php:70
+msgid "Five Star Business Profile & Schema"
+msgstr ""
+
+#: includes/class-schema-cpt.php:213
+msgid " Details"
+msgstr ""
+
+#: includes/class-schema-cpt.php:301
+msgid "Add Another "
+msgstr ""
+
+#: includes/class-settings.php:83 includes/class-settings.php:429
+msgid "Name"
+msgstr ""
+
+#: includes/class-settings.php:84 includes/class-settings.php:445
+#: includes/patterns/address.php:6
+msgid "Address"
+msgstr ""
+
+#: includes/class-settings.php:85 includes/class-settings.php:497
+msgid "Phone"
+msgstr ""
+
+#: includes/class-settings.php:86 includes/class-settings.php:526
+msgid "Cell Phone"
+msgstr ""
+
+#: includes/class-settings.php:87
+msgid "WhatsApp"
+msgstr ""
+
+#: includes/class-settings.php:88 includes/class-settings.php:600
+#: includes/patterns/fax.php:6
+msgid "Fax"
+msgstr ""
+
+#: includes/class-settings.php:89 includes/class-settings.php:404
+msgid "Ordering Link"
+msgstr ""
+
+#: includes/class-settings.php:90 includes/class-settings.php:104
+msgid "Contact"
+msgstr ""
+
+#: includes/class-settings.php:93
+msgid "Maps"
+msgstr ""
+
+#: includes/class-settings.php:94
+msgid "Parent Organization"
+msgstr ""
+
+#: includes/class-settings.php:102
+msgid "Place an Order"
+msgstr ""
+
+#: includes/class-settings.php:103
+msgid "Get Directions"
+msgstr ""
+
+#: includes/class-settings.php:106
+msgid "Monday"
+msgstr ""
+
+#: includes/class-settings.php:107
+msgid "Tuesday"
+msgstr ""
+
+#: includes/class-settings.php:108
+msgid "Wednesday"
+msgstr ""
+
+#: includes/class-settings.php:109
+msgid "Thursday"
+msgstr ""
+
+#: includes/class-settings.php:110
+msgid "Friday"
+msgstr ""
+
+#: includes/class-settings.php:111
+msgid "Saturday"
+msgstr ""
+
+#: includes/class-settings.php:112
+msgid "Sunday"
+msgstr ""
+
+#: includes/class-settings.php:114
+msgid "Mo"
+msgstr ""
+
+#: includes/class-settings.php:115
+msgid "Tu"
+msgstr ""
+
+#: includes/class-settings.php:116
+msgid "We"
+msgstr ""
+
+#: includes/class-settings.php:117
+msgid "Th"
+msgstr ""
+
+#: includes/class-settings.php:118
+msgid "Fr"
+msgstr ""
+
+#: includes/class-settings.php:119
+msgid "Sa"
+msgstr ""
+
+#: includes/class-settings.php:120
+msgid "Su"
+msgstr ""
+
+#: includes/class-settings.php:122 includes/template-functions.php:677
+msgid "Open"
+msgstr ""
+
+#: includes/class-settings.php:123
+msgid "Open until"
+msgstr ""
+
+#: includes/class-settings.php:124
+msgid "Open from"
+msgstr ""
+
+#: includes/class-settings.php:125 includes/template-functions.php:713
+msgid "Closed"
+msgstr ""
+
+#: includes/class-settings.php:127
+msgid "Special Opening Hours"
+msgstr ""
+
+#: includes/class-settings.php:128
+msgid "Holidays"
+msgstr ""
+
+#: includes/class-settings.php:346
+msgid "Basic"
+msgstr ""
+
+#: includes/class-settings.php:356
+msgid "Search Engine Optimization"
+msgstr ""
+
+#: includes/class-settings.php:368
+msgid ""
+"Select the option that best describes your business to improve how search "
+"engines understand your website."
+msgstr ""
+
+#: includes/class-settings.php:384
+msgid "Image"
+msgstr ""
+
+#: includes/class-settings.php:385
+msgid ""
+"Google requires you provide an image to display with your local business "
+"search profile."
+msgstr ""
+
+#: includes/class-settings.php:387
+msgid "Add Image"
+msgstr ""
+
+#: includes/class-settings.php:388
+msgid "Change Image"
+msgstr ""
+
+#: includes/class-settings.php:389
+msgid "Remove Image"
+msgstr ""
+
+#: includes/class-settings.php:405
+msgid ""
+"If you offer online ordering, enter the URL of your order page here (can be "
+"on this site or external) and a link to it will display in your contact card."
+msgstr ""
+
+#: includes/class-settings.php:418
+msgid "Contact Information"
+msgstr ""
+
+#: includes/class-settings.php:430
+msgid ""
+"Enter the name of your business if it is different than the website name."
+msgstr ""
+
+#: includes/class-settings.php:454
+msgid "Retrieve map coordinates"
+msgstr ""
+
+#: includes/class-settings.php:455
+msgid "Remove map coordinates"
+msgstr ""
+
+#: includes/class-settings.php:456
+msgid "Try again?"
+msgstr ""
+
+#: includes/class-settings.php:461
+msgid "Nothing was found at that address"
+msgstr ""
+
+#: includes/class-settings.php:476
+msgid "Google Maps API Key"
+msgstr ""
+
+#: includes/class-settings.php:478
+#, php-format
+msgid ""
+"Google requires an API key to use their maps. %sGet an API key%s. A full "
+"walk-through is available in the %sdocumentation%s."
+msgstr ""
+
+#: includes/class-settings.php:511
+msgid "Click-to-Call Phone"
+msgstr ""
+
+#: includes/class-settings.php:512
+msgid ""
+"Use this field to set a different number for when the phone number is "
+"clicked in the contact card (e.g. if you'd like it to be just an unformatted "
+"string of numbers). If left blank, the click-to-call will use the phone "
+"number provided in the option above."
+msgstr ""
+
+#: includes/class-settings.php:540
+msgid "Click-to-Call Cell Phone"
+msgstr ""
+
+#: includes/class-settings.php:541
+msgid ""
+"Use this field to set a different number for when the cell phone number is "
+"clicked in the contact card (e.g. if you'd like it to be just an unformatted "
+"string of numbers). If left blank, the click-to-call will use the cell phone "
+"number provided in the option above."
+msgstr ""
+
+#: includes/class-settings.php:555 includes/patterns/whatsapp.php:6
+msgid "Whatsapp"
+msgstr ""
+
+#: includes/class-settings.php:556
+msgid ""
+"This is the number that will be used to send the message. It must be a full "
+"phone number in international format. Omit any zeroes, brackets, or dashes "
+"when adding the phone number in international format.<br>Examples:<br>Use: "
+"1XXXXXXXXXX<br>Don't use: +001-(XXX)XXXXXXX"
+msgstr ""
+
+#: includes/class-settings.php:570
+msgid "Whatsapp Display Number"
+msgstr ""
+
+#: includes/class-settings.php:571
+msgid ""
+"This is the number that will display in the contact card. For the number "
+"used to actually send the message, please see the setting above this one."
+msgstr ""
+
+#: includes/class-settings.php:585
+msgid "Whatsapp Text"
+msgstr ""
+
+#: includes/class-settings.php:586
+msgid ""
+"The pre-filled message will automatically appear in the text field of a chat."
+msgstr ""
+
+#: includes/class-settings.php:614
+msgid "Contact Page"
+msgstr ""
+
+#: includes/class-settings.php:615
+msgid ""
+"Select a page on your site where users can reach you, such as a contact form."
+msgstr ""
+
+#: includes/class-settings.php:633
+msgid "Disable Contact Page Card"
+msgstr ""
+
+#: includes/class-settings.php:634
+msgid ""
+"This disables the contact card from being automatically included on the page "
+"you set as the contact page in the option above this one."
+msgstr ""
+
+#: includes/class-settings.php:649
+msgid "Email Address (optional)"
+msgstr ""
+
+#: includes/class-settings.php:650
+msgid ""
+"Enter an email address only if you want to display this publicly. Showing "
+"your email address on your site may cause you to receive excessive spam."
+msgstr ""
+
+#: includes/class-settings.php:662
+msgid "Schedule"
+msgstr ""
+
+#: includes/class-settings.php:726
+msgid ""
+"<strong>This feature requires at least version 5.3 of WordPress.</strong> "
+"Define special opening hours for holidays, events or other needs. Leave the "
+"time empty if you're closed all day."
+msgstr ""
+
+#: includes/class-settings.php:765
+msgid "Date Format"
+msgstr ""
+
+#: includes/class-settings.php:766
+msgid ""
+"Date format displayed in the opening hours setting panel in your admin area. "
+"Must match formatting rules at https://amsul.ca/pickadate.js/date/#formats"
+msgstr ""
+
+#: includes/class-settings.php:777
+msgid "Time Format"
+msgstr ""
+
+#: includes/class-settings.php:778
+msgid ""
+"Time format displayed in the opening hours setting panel in your admin area. "
+"Must match formatting rules at https://amsul.ca/pickadate.js/time/#formats. "
+"(The time format on the front end uses your WordPress settings.)"
+msgstr ""
+
+#: includes/class-settings.php:787 includes/class-settings.php:798
+msgid "Multiple Locations"
+msgstr ""
+
+#: includes/class-settings.php:799
+msgid "Enable support for multiple business locations."
+msgstr ""
+
+#: includes/class-settings.php:866 includes/class-settings.php:971
+#: includes/class-settings.php:986 includes/class-settings.php:1001
+msgid "Premium"
+msgstr ""
+
+#: includes/class-settings.php:886 includes/class-settings.php:986
+msgid "Labelling"
+msgstr ""
+
+#: includes/class-settings.php:906 includes/class-settings.php:1001
+msgid "Styling"
+msgstr ""
+
+#: includes/class-settings.php:950
+msgid "The premium version also gives you access to the following features:"
+msgstr ""
+
+#: includes/class-settings.php:952
+msgid "Layout and styling options for the contact card"
+msgstr ""
+
+#: includes/class-settings.php:953
+msgid "Drag and drop re-orderding for contact card elements"
+msgstr ""
+
+#: includes/class-settings.php:954
+msgid "WooCommerce integration with product structured data"
+msgstr ""
+
+#: includes/class-settings.php:955
+msgid "Automatically-integrated schema for posts"
+msgstr ""
+
+#: includes/class-settings.php:956
+msgid "Default schema helpers"
+msgstr ""
+
+#: includes/class-settings.php:957
+msgid ""
+"Quickly add schema for any page/element using our custom list of defaults"
+msgstr ""
+
+#: includes/class-settings.php:958
+msgid "Email support"
+msgstr ""
+
+#: includes/class-settings.php:961
+msgid "UPGRADE NOW"
+msgstr ""
+
+#: includes/class-settings.php:972
+msgid ""
+"The premium options let you enable WooCommerce integration, which "
+"automatically adds schema to your products, enable automatic schema for the "
+"posts on your site and add default options for all the schema fields "
+"available in the plugin."
+msgstr ""
+
+#: includes/class-settings.php:987
+msgid ""
+"The labelling options let you change the wording of the different labels "
+"that appear on the front end of the plugin. You can use this to translate "
+"them, customize the wording for your purpose, etc."
+msgstr ""
+
+#: includes/class-settings.php:1002
+msgid ""
+"With these settings you can select a different layout for your contact card "
+"and also set various styling options, like the font size and color for the "
+"different contact card elements."
+msgstr ""
+
+#: includes/patterns/cell-phone.php:6
+msgid "Cell Phone Number"
+msgstr ""
+
+#: includes/patterns/map.php:6
+msgid "Map"
+msgstr ""
+
+#: includes/patterns/phone-email.php:6
+msgid "Phone and Email"
+msgstr ""
+
+#: includes/patterns/phone.php:6
+msgid "Phone Number"
+msgstr ""
+
+#: includes/template-functions.php:235
+msgid "Link"
+msgstr ""
+
+#: includes/template-functions.php:689
+msgid "Open until "
+msgstr ""
+
+#: includes/template-functions.php:691
+msgid "Open from "
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPage.class.php:173
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPageSetting.FileUpload.class.php:48
+msgid "Current image:"
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPageSetting.FileUpload.class.php:61
+msgid "Upload Image"
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPageSetting.InfiniteTable.class.php:201
+msgid "Cancel"
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPageSetting.InfiniteTable.class.php:202
+msgid "Save"
+msgstr ""
+
+#: lib/simple-admin-pages/classes/AdminPageSetting.Ordering.class.php:85
+msgid "Restore Default Order"
+msgstr ""
