@@ -5,7 +5,7 @@ Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
 Tested Up To: 6.7
 Tags: business profile, seo, local seo, schema, address, google map, contact, phone, contact card, vcard, contact info, business location, business address, business map, business schema, organization schema, corporation schema, contact schema, address schema, location schema, map schema, business structured data, business microdata, address microdata, location structured data, location microdata, contact shortcode, location shortcode, address shortcode, schema shortcode, gutenberg schema, gutenberg address
-Stable tag: 2.3.10
+Stable tag: 2.3.11
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -235,6 +235,9 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 
 == Changelog ==
+
+= 2.3.11 (2025-04-24) =
+- Fix: Contact page label was not showing.
 
 = 2.3.10 (2024-11-25) =
 - Tested with WordPress 6.7.

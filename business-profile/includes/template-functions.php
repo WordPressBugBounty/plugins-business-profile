@@ -551,7 +551,7 @@ if ( ! function_exists( 'bpwfwp_print_contact' ) ) {
 
 		<div class="bp-contact bp-contact-page">
 			<a href="<?php echo esc_url( get_permalink( $contact ) ); ?>">
-				<?php esc_html( $bpfwp_controller->settings->get_setting( 'label-contact' ) ); ?>
+				<?php echo esc_html( $bpfwp_controller->settings->get_setting( 'label-contact' ) ); ?>
 			</a>
 		</div>
 
