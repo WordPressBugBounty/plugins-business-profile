@@ -831,6 +831,9 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 		$disable_main_exceptions = get_post_meta( $location, 'disable_main_exceptions', true );
 
 		$exceptions = ( $disable_main_exceptions and $location ) ? get_post_meta( $location, 'exceptions', true ) : bpfwp_setting( 'exceptions', $location );
+
+		// sort exceptions by date
+		usort( $exceptions, array( $bpfwp_controller->settings, 'sort_by_date' ) );
 		
 		if ( empty( $exceptions ) || ! bpfwp_get_display( 'show_opening_hours' ) || ! function_exists( 'wp_date' ) ) {
 			return '';
@@ -851,9 +854,9 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 
 		foreach ( $exceptions as $exception ) {
 
-			if ( empty( $exception['date'] ) ) { continue; }
+			if ( empty( $exception['date'] ) and empty( $exception['date_range'] ) ) { continue; }
 
-			if ( time() > strtotime( $exception['date'] ) + 24*3600 ) { continue; }
+			if ( ( time() > strtotime( $exception['date'] ) + 24*3600 ) and ( time() > strtotime( $exception['date_range']['end'] ) + 24*3600 ) ) { continue; }
 			
 			if ( array_key_exists( 'time', $exception ) ) {
 				// special opening-hours
@@ -865,12 +868,8 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 			}
 		}
 
-		usort( $data['special_hours'], function( $a, $b ) {
-			return strcasecmp( $a['date'], $b['date'] );
-		});
-		usort( $data['holiday'], function( $a, $b ) {
-			return strcasecmp( $a['date'], $b['date'] );
-		});
+		usort( $data['special_hours'], array( $bpfwp_controller->settings, 'sort_by_date' ) );
+		usort( $data['holiday'], array( $bpfwp_controller->settings, 'sort_by_date' ) );
 
 		if ( 0 < count( $data['special_hours'] ) ) { ?>
 			
@@ -880,13 +879,17 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 				<?php foreach ( $data['special_hours'] as $exception ) { ?>
 				
 					<?php 
-						$date  = new DateTime( $exception['date'], $tz );
-						$start = new DateTime( $exception['time']['start'], $tz );
-						$end   = new DateTime( $exception['time']['end'], $tz );
+						$start_date  = ! empty( $exception['date_range']['start'] ) ? new DateTime( $exception['date_range']['start'], $tz ) : null;
+						$end_date    = ! empty( $exception['date_range']['end'] ) ? new DateTime( $exception['date_range']['end'], $tz ) : null;
+						$date        = ! empty( $exception['date'] ) ? new DateTime( $exception['date'], $tz ) : null;
+						$start       = new DateTime( $exception['time']['start'], $tz );
+						$end         = new DateTime( $exception['time']['end'], $tz );
 					?>
 
 					<div class="bp-date">
-						<span class="label"><?php echo wp_date( $date_format, $date->format( 'U' ) ); ?></span>
+						<span class="label">
+							<?php echo ( $date ? wp_date( $date_format, $date->format( 'U' ) ) : wp_date( $date_format, $start_date->format( 'U' ) ) . ' ' . __( 'to', 'business-profile' ) . ' ' . wp_date( $date_format, $end_date->format( 'U' ) ) ); ?>
+						</span>
 						<span class="bp-times">
 							<span class="bp-time">
 								<?php 
@@ -909,12 +912,16 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 
 				<?php foreach ( $data['holiday'] as $exception ) { ?>
 				
-					<?php $date = new DateTime( $exception['date'], $tz ); ?>
+					<?php 
+						$start_date  = ! empty( $exception['date_range']['start'] ) ? new DateTime( $exception['date_range']['start'], $tz ) : null;
+						$end_date    = ! empty( $exception['date_range']['end'] ) ? new DateTime( $exception['date_range']['end'], $tz ) : null;
+						$date        = ! empty( $exception['date'] ) ? new DateTime( $exception['date'], $tz ) : null;
+					 ?>
 				
 					<div class="bp-date">
 						<span class="label">
-							<?php echo wp_date( $date_format, $date->format( 'U' ) ); ?>
-							</span>
+							<?php echo ( $date ? wp_date( $date_format, $date->format( 'U' ) ) : wp_date( $date_format, $start_date->format( 'U' ) ) . ' ' . __( 'to', 'business-profile' ) . ' ' . wp_date( $date_format, $end_date->format( 'U' ) ) ); ?>
+						</span>
 						<span class="bp-times">
 							<span class="bp-time">
 								<?php echo esc_html( $bpfwp_controller->settings->get_setting( 'label-closed' ) ); ?>

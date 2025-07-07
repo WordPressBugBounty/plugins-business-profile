@@ -894,6 +894,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 					'date_format'   => $bpfwp_controller->settings->get_setting( 'date-format' ),
 					'disable_weeks' => true,
 					'disable_date'  => true,
+					'disable_date_range'	=> true,
 					'strings'       => array(
 						'add_rule'         => __( 'Add another opening time', 'business-profile' ),
 						'weekly'           => _x( 'Weekly', 'Format of a scheduling rule', 'business-profile' ),
@@ -949,6 +950,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 						'weekly'           => _x( 'Weekly', 'Format of a scheduling rule', 'business-profile' ),
 						'monthly'          => _x( 'Monthly', 'Format of a scheduling rule', 'business-profile' ),
 						'date'             => _x( 'Date', 'Format of a scheduling rule', 'business-profile' ),
+						'date_range' 	   => _x( 'Date Range', 'Format of a scheduling rule', 'business-profile' ),
 						'weekdays'         => _x( 'Days of the week', 'Label for selecting days of the week in a scheduling rule', 'business-profile' ),
 						'month_weeks'      => _x( 'Weeks of the month', 'Label for selecting weeks of the month in a scheduling rule', 'business-profile' ),
 						'date_label'       => _x( 'Date', 'Label to select a date for a scheduling rule', 'business-profile' ),

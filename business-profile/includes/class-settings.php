@@ -687,10 +687,11 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 						'saturday'  => _x( 'Sa', 'Saturday abbreviation', 'business-profile' ),
 						'sunday'    => _x( 'Su', 'Sunday abbreviation', 'business-profile' ),
 					),
-					'time_format'   => $this->get_setting( 'time-format' ),
-					'date_format'   => $this->get_setting( 'date-format' ),
-					'disable_weeks' => true,
-					'disable_date'  => true,
+					'time_format'   		=> $this->get_setting( 'time-format' ),
+					'date_format'   		=> $this->get_setting( 'date-format' ),
+					'disable_weeks' 		=> true,
+					'disable_date'  		=> true,
+					'disable_date_range'	=> true,
 					'strings'       => array(
 						'add_rule'         => __( 'Add another opening time', 'business-profile' ),
 						'weekly'           => _x( 'Weekly', 'Format of a scheduling rule', 'business-profile' ),
@@ -729,7 +730,7 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 				array(
 					'id'				=> 'exceptions',
 					'title'				=> __( 'Exceptions', 'business-profile' ),
-					'description'		=> __( '<strong>This feature requires at least version 5.3 of WordPress.</strong> Define special opening hours for holidays, events or other needs. Leave the time empty if you\'re closed all day.', 'business-profile' ),
+					'description'		=> __( 'Define special opening hours for holidays, events or other needs. Leave the time empty if you\'re closed all day.', 'business-profile' ),
 					'time_format'   	=> $this->get_setting( 'time-format' ),
 					'date_format'   	=> $this->get_setting( 'date-format' ),
 					'disable_weekdays'	=> true,
@@ -739,6 +740,7 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 						'weekly'           => _x( 'Weekly', 'Format of a scheduling rule', 'business-profile' ),
 						'monthly'          => _x( 'Monthly', 'Format of a scheduling rule', 'business-profile' ),
 						'date'             => _x( 'Date', 'Format of a scheduling rule', 'business-profile' ),
+						'date_range' 	   => _x( 'Date Range', 'Format of a scheduling rule', 'business-profile' ),
 						'weekdays'         => _x( 'Days of the week', 'Label for selecting days of the week in a scheduling rule', 'business-profile' ),
 						'month_weeks'      => _x( 'Weeks of the month', 'Label for selecting weeks of the month in a scheduling rule', 'business-profile' ),
 						'date_label'       => _x( 'Date', 'Label to select a date for a scheduling rule', 'business-profile' ),
@@ -1029,27 +1031,32 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 		 * @since 2.1.5
 		 */
 		public function clean_schedule_exceptions( $val ) {
-	
-			if ( empty( $val['exceptions'] ) ) {
+
+			if ( empty( $val['schedule-closed'] ) ) {
 				return $val;
 			}
 	
 			// Sort by date
-			$exceptions = $val['exceptions'];
-			usort( $exceptions, array( $this, 'sort_by_date' ) );
+			$schedule_closed = $val['schedule-closed'];
+			usort( $schedule_closed, array( $this, 'sort_by_date' ) );
 	
-			// Remove exceptions more than a day old
-			$week_ago = time() - 24*3600;
-			for( $i = 0; $i < count( $exceptions ); $i++ ) {
-				if ( strtotime( $exceptions[$i]['date'] ) > $week_ago ) {
+			// Remove exceptions more than a week old
+			$week_ago = time() - 604800;
+			foreach( $schedule_closed as $idx => $record ) {
+				if( array_key_exists( 'date_range', $record ) && !empty( $record['date_range']['end'] ) )
+					$record = new DateTime( $record['date_range']['end'], wp_timezone() );
+				elseif( array_key_exists( 'date', $record ) )
+					$record = new DateTime( $record['date'], wp_timezone() );
+	
+				if ( is_object($record) && $record->format( 'U' ) > $week_ago ) {
 					break;
 				}
 			}
-			if ( $i ) {
-				$exceptions = array_slice( $exceptions, $i );
+			if ( $idx ) {
+				$schedule_closed = array_slice( $schedule_closed, $idx );
 			}
 	
-			$val['exceptions'] = $exceptions;
+			$val['schedule-closed'] = $schedule_closed;
 	
 			return $val;
 		}
@@ -1061,11 +1068,22 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 		 * @since 2.1.5
 		 */
 		public function sort_by_date( $a, $b ) {
+
+			if( isset( $a['date'] ) )
+				$a = ( new DateTime( $a['date'], wp_timezone() ) )->format( 'U' );
+			elseif( isset( $a['date_range'] ) )
+				$a = ( new DateTime( $a['date_range']['end'], wp_timezone() ) )->format( 'U' );
+			else
+				$a = 0;
 	
-			$ad = empty( $a['date'] ) ? 0 : strtotime( $a['date'] );
-			$bd = empty( $b['date'] ) ? 0 : strtotime( $b['date'] );
+			if( isset( $b['date'] ) )
+				$b = ( new DateTime( $b['date'], wp_timezone() ) )->format( 'U' );
+			elseif( isset( $b['date_range'] ) )
+				$b = ( new DateTime( $b['date_range']['end'], wp_timezone() ) )->format( 'U' );
+			else
+				$b = 0;
 	
-			return $ad - $bd;
+			return $a - $b;
 		}
 
 		/**
