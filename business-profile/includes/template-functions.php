@@ -831,13 +831,13 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 		$disable_main_exceptions = get_post_meta( $location, 'disable_main_exceptions', true );
 
 		$exceptions = ( $disable_main_exceptions and $location ) ? get_post_meta( $location, 'exceptions', true ) : bpfwp_setting( 'exceptions', $location );
-
-		// sort exceptions by date
-		usort( $exceptions, array( $bpfwp_controller->settings, 'sort_by_date' ) );
 		
 		if ( empty( $exceptions ) || ! bpfwp_get_display( 'show_opening_hours' ) || ! function_exists( 'wp_date' ) ) {
 			return '';
 		}
+
+		// sort exceptions by date
+		usort( $exceptions, array( $bpfwp_controller->settings, 'sort_by_date' ) );
 
 		// Print the metatags with proper schema formatting.
 		$return_data = bpfwp_get_exceptions_array( $exceptions );
