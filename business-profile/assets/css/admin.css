@@ -259,7 +259,7 @@ NEW DASHBOARD
   margin-left: -20px;
   width: calc(100% + 20px);
   height: 256px;
-  background: url(../img/bpfwp-dashboard-banner.png) center no-repeat #1b0f49;
+  background: url(../img/bpfwp-dashboard-banner.png) center no-repeat #0C154C;
 }
 .bpfwp-dashboard-new-upgrade-banner .bpfwp-dashboard-banner-icon {
   position: absolute;
@@ -2175,7 +2175,41 @@ About Us page
 	flex-basis: calc(100% - 140px);
 }
 
-
 .bpfwp-hidden {
-  display: none;
+  display: none !important;
+}
+
+/*
+==============================================
+New plugin notice
+==============================================
+*/
+
+.ait-iat-new-plugin-notice {
+  display: flex;
+  align-items: center;
+  min-height: 88px;
+  border-left-color: #5511f8;
+}
+.bpfwp-new-plugin-notice-img {
+  width: 64px;
+  height: 64px;
+  margin-right: 16px;
+}
+.bpfwp-new-plugin-notice-img img {
+  width: 64px;
+  height: 64px;
+}
+.bpfwp-new-plugin-notice-txt p {
+  margin: 2px 0;
+  padding: 0;
+}
+.bpfwp-new-plugin-notice-txt a {
+  color: #5511f8;
+  font-weight: bold;
+  text-decoration: none;
+}
+.bpfwp-new-plugin-notice-txt a:hover {
+  color: #7e56dc;
+  text-decoration: underline;
 }

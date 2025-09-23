@@ -3,7 +3,7 @@
  * Plugin Name: Five Star Business Profile and Schema
  * Plugin URI:  https://www.fivestarplugins.com/plugins/business-profile/
  * Description: Add schema structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Map, opening hours and more.
- * Version:     2.3.14
+ * Version:     2.3.15
  * Author:      Five Star Plugins
  * Author URI:  https://www.fivestarplugins.com
  * License: GPLv3
@@ -111,7 +111,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			define( 'BPFWP_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_FNAME', plugin_basename( __FILE__ ) );
-			define( 'BPFWP_VERSION', '2.3.14' );
+			define( 'BPFWP_VERSION', '2.3.15' );
 		}
 
 		/**
@@ -186,8 +186,9 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 
 			add_action( 'plugins_loaded',        array( $this, 'plugin_loaded_action_hook' ) );
 			add_action( 'plugins_loaded',        array( $this, 'load_textdomain' ) );
-			add_action( 'admin_notices',		 array( $this, 'display_header_area') );
+			add_action( 'admin_notices',		 array( $this, 'display_header_area'), 99 );
 			add_action( 'admin_notices',         array( $this, 'maybe_display_helper_notice' ) );
+			add_action( 'admin_notices', 		 array( $this, 'maybe_display_new_plugin_notice' ) );
 			add_action( 'wp_enqueue_scripts',    array( $this, 'register_assets' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 			add_action( 'widgets_init',          array( $this, 'register_widgets' ) );
@@ -195,6 +196,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			add_filter( 'plugin_action_links',   array( $this, 'plugin_action_links' ), 10, 2 );
 
 			add_action( 'wp_ajax_bpfwp_hide_helper_notice', array( $this, 'hide_helper_notice' ) );
+			add_action( 'wp_ajax_bpfwp_hide_new_plugin_notice', array( $this, 'hide_new_plugin_notice' ) );
 		}
 
 		/**
@@ -472,6 +474,59 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			}
 	
 			set_transient( 'fsp-helper-notice-dismissed', true, 3600*24*7 );
+	
+			die();
+		}
+
+		public function maybe_display_new_plugin_notice() {
+
+			$screen = get_current_screen();
+	        if (!isset($screen->id) || strpos($screen->id, 'business-profile_page_') === false) { return; }
+	
+			if ( get_transient( 'bpfwp-ait-iat-plugin-notice-dismissed' ) ) { return; }
+	
+			// October 17th, 2025
+			if ( time() > 1760759940 ) { return; }
+	
+			?>
+	
+			<div class='notice notice-error is-dismissible ait-iat-new-plugin-notice'>
+				
+				<div class='bpfwp-new-plugin-notice-img'>
+					<img src='<?php echo BPFWP_PLUGIN_URL . '/assets/img/ait-iat-plugin-icon.png' ; ?>' />
+				</div>
+	
+				<div class='bpfwp-new-plugin-notice-txt'>
+					<p><?php _e( 'Want to improve your search rankings? Try our new <strong>AI Image Alt Text</strong> plugin!', 'business-profile' ); ?></p>
+					<p><?php echo sprintf( __( 'As a thank you to our customers, for a limited time you can get a <strong>free pro license</strong>! Try the <a target=\'_blank\' href=\'%s\'>free version</a> today or use code <code>early_adopter_pro</code> to <a target=\'_blank\' href=\'%s\'>get your pro version license</a>!', 'business-profile' ), admin_url( 'plugin-install.php?tab=plugin-information&plugin=ai-image-alt-text' ), 'https://www.wpaiplugins.dev/wordpress-image-alt-text-ai-plugin/' ); ?></p>
+				</div>
+	
+				<div class='bpfwp-clear'></div>
+	
+			</div>
+	
+			<?php 
+		}
+	
+		public function hide_new_plugin_notice() {
+			global $bpfwp_controller;
+	
+			// Authenticate request
+			if (
+				! check_ajax_referer( 'bpfwp-admin-js', 'nonce' )
+				||
+				! current_user_can( 'manage_options' )
+			) {
+				wp_send_json_error(
+					array(
+						'error' => 'loggedout',
+						'msg' => sprintf( __( 'You have been logged out. Please %slogin again%s.', 'business-profile' ), '<a href="' . wp_login_url( admin_url( 'admin.php?page=bpfwp-dashboard' ) ) . '">', '</a>' ),
+					)
+				);
+	
+			}
+	
+			set_transient( 'bpfwp-ait-iat-plugin-notice-dismissed', true, 3600*24*7 );
 	
 			die();
 		}

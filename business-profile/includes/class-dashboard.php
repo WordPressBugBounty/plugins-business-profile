@@ -304,7 +304,7 @@ class bpfwpDashboard {
 				<ul class="bpfwp-dashboard-new-footer-two-menu">
 					<li>SOCIAL</li>
 					<li><a href="https://www.facebook.com/fivestarplugins/" target="_blank">Facebook</a></li>
-					<li><a href="https://twitter.com/fivestarplugins" target="_blank">Twitter</a></li>
+					<li><a href="https://x.com/wpfivestar" target="_blank">Twitter</a></li>
 					<li><a href="https://www.fivestarplugins.com/category/blog/?utm_source=bpfwp_dashboard&utm_content=footer_blog" target="_blank">Blog</a></li>
 				</ul>
 				<ul class="bpfwp-dashboard-new-footer-two-menu">

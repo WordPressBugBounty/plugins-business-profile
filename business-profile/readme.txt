@@ -5,7 +5,7 @@ Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
 Tested Up To: 6.8
 Tags: business profile, seo, local seo, schema, address, google map, contact, phone, contact card, vcard, contact info, business location, business address, business map, business schema, organization schema, corporation schema, contact schema, address schema, location schema, map schema, business structured data, business microdata, address microdata, location structured data, location microdata, contact shortcode, location shortcode, address shortcode, schema shortcode, gutenberg schema, gutenberg address
-Stable tag: 2.3.14
+Stable tag: 2.3.15
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -235,6 +235,9 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 
 == Changelog ==
+
+= 2.3.15 (2025-09-23) =
+- Updated admin notice capabilities
 
 = 2.3.14 (2025-07-08) =
 - Fix for an error that sometimes occurred when trying to output the contact card for your main location if you did not have exceptions.

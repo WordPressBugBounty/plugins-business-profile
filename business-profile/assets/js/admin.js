@@ -130,3 +130,18 @@ jQuery( document ).ready( function() {
 	jQuery( '.bpfwp-settings-preview' ).prevAll( '.sap-tutorial-toggle' ).hide();
 	jQuery( '.bpfwp-settings-preview .sap-tutorial-toggle' ).hide();
 });
+
+// NEW PLUGIN NOTICE
+
+jQuery( document ).ready( function( $ ) {
+
+  jQuery(document).on( 'click', '.ait-iat-new-plugin-notice .notice-dismiss', function( event ) {
+    var data = jQuery.param({
+      action: 'bpfwp_hide_new_plugin_notice',
+      plugin: 'ait_iat',
+      nonce: bpfwp_php_admin_data.nonce
+    });
+
+    jQuery.post( ajaxurl, data, function() {} );
+  });
+});
