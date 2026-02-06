@@ -13,11 +13,20 @@ class bpfwpInstallationWalkthrough {
 	public $scheduler;
 
 	public function __construct() {
-		add_action( 'admin_menu', array($this, 'register_install_screen' ));
-		add_action( 'admin_head', array($this, 'hide_install_screen_menu_item' ));
-		add_action( 'admin_init', array($this, 'redirect'), 9999);
+		add_action( 'admin_menu', array( $this, 'register_install_screen' ) );
+		add_action( 'admin_head', array( $this, 'hide_install_screen_menu_item' ) );
+		add_action( 'admin_init', array( $this, 'redirect' ), 9999 );
 
-		add_action('admin_head', array($this, 'admin_enqueue'));
+		add_action( 'admin_head', array( $this, 'admin_enqueue' ) );
+
+		add_action( 'init', array( $this, 'initialize_scheduler' ) );
+
+		add_action('wp_ajax_bpfwp_welcome_add_contact_page', array($this, 'add_contact_page'));
+		add_action('wp_ajax_bpfwp_welcome_set_contact_information', array($this, 'set_contact_information'));
+		add_action('wp_ajax_bpfwp_welcome_set_opening_hours', array($this, 'set_opening_hours'));
+	}
+
+	public function initialize_scheduler() {
 
 		if( ! class_exists( 'sapAdminPageSetting_2_6_19' ) ) {
 			require_once BPFWP_PLUGIN_DIR . '/lib/simple-admin-pages/classes/AdminPageSetting.class.php';
@@ -86,10 +95,6 @@ class bpfwpInstallationWalkthrough {
 		);
 
 		$this->scheduler = new sapAdminPageSettingScheduler_2_6_19( $args );
-
-		add_action('wp_ajax_bpfwp_welcome_add_contact_page', array($this, 'add_contact_page'));
-		add_action('wp_ajax_bpfwp_welcome_set_contact_information', array($this, 'set_contact_information'));
-		add_action('wp_ajax_bpfwp_welcome_set_opening_hours', array($this, 'set_opening_hours'));
 	}
 
 	public function redirect() {

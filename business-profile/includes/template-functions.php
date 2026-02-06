@@ -1217,3 +1217,103 @@ function bpfwp_decode_infinite_table_setting( $values ) {
 	return is_array( json_decode( html_entity_decode( $values ) ) ) ? json_decode( html_entity_decode( $values ) ) : array();
 }
 }
+
+if ( ! function_exists ( 'bpfwp_get_blacklisted_callbacks' ) ) {
+function bpfwp_get_blacklisted_callbacks() {
+
+	$dangerous_functions = array(
+	    // Command execution / processes
+	    'system',
+	    'exec',
+	    'shell_exec',
+	    'passthru',
+	    'proc_open',
+	    'popen',
+	    'pcntl_exec',
+	
+	    // Dynamic code / evaluation
+	    'eval',             // not used as a callback, but block name anyway
+	    'assert',
+	    'create_function',
+	
+	    // File read/write
+	    'file_get_contents',
+	    'file_put_contents',
+	    'fopen',
+	    'fwrite',
+	    'fputs',
+	    'fprintf',
+	    'ftruncate',
+	    'unlink',
+	    'copy',
+	    'rename',
+	    'rmdir',
+	    'mkdir',
+	    'scandir',
+	    'glob',
+	    'readfile',
+	    'file',             // reads entire file into array
+	    'move_uploaded_file',
+	    'chmod',
+	    'chown',
+	    'chgrp',
+	    'symlink',
+	    'link',
+	    'tempnam',
+	
+	    // Network / sockets / external calls
+	    'fsockopen',
+	    'pfsockopen',
+	    'curl_exec',
+	    'curl_multi_exec',
+	    'stream_socket_client',
+	    'stream_socket_server',
+	
+	    // Environment manipulation / mail (optional, but often sensitive)
+	    'putenv',
+	    'apache_setenv',
+	    'mail',
+	);
+
+	return $dangerous_functions;
+} 
+}
+
+
+if ( ! function_exists ( 'bpfwp_is_callback_allowed' ) ) {
+function bpfwp_is_callback_allowed( $callback ) {
+	$dangerous_functions = bpfwp_get_blacklisted_callbacks();
+
+	// Disallow closures entirely (you can't inspect them safely)
+    if ( $callback instanceof Closure ) {
+        return false;
+    }
+
+    // Simple function name
+    if ( is_string( $callback ) ) {
+        $name = strtolower( ltrim( $callback, '\\' ) );
+        return ! in_array( $name, $dangerous_functions, true );
+    }
+
+    // Array callback: [object|string, 'method']
+    if ( is_array( $callback ) && count( $callback ) === 2 ) {
+        $method = strtolower( $callback[1] );
+
+        // Optionally reuse same list for methods
+        if ( in_array( $method, $dangerous_functions, true ) ) {
+            return false;
+        }
+
+        // Optional: block certain classes / namespaces
+        if ( is_string( $callback[0] ) ) {
+            $class = ltrim( $callback[0], '\\' );
+            // Example: disallow callbacks from some class
+            // if ( $class === 'DangerousClass' ) return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+}

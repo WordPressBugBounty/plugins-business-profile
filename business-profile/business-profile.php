@@ -3,7 +3,7 @@
  * Plugin Name: Five Star Business Profile and Schema
  * Plugin URI:  https://www.fivestarplugins.com/plugins/business-profile/
  * Description: Add schema structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Map, opening hours and more.
- * Version:     2.3.15
+ * Version:     2.3.17
  * Author:      Five Star Plugins
  * Author URI:  https://www.fivestarplugins.com
  * License: GPLv3
@@ -45,6 +45,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 		 * @return void
 		 */
 		public function __construct() {
+
 			self::constants();
 			self::includes();
 			self::instantiate();
@@ -58,11 +59,6 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 
 			// Add a link to the Google Rich Results Test Page for front-end pages
 			add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 100 );
-
-			// Load plugin dashboard
-			require_once( BPFWP_PLUGIN_DIR . '/includes/class-dashboard.php' );
-			new bpfwpDashboard();
-
 		}
 
 		public function add_menu_page() {
@@ -111,7 +107,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			define( 'BPFWP_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_FNAME', plugin_basename( __FILE__ ) );
-			define( 'BPFWP_VERSION', '2.3.15' );
+			define( 'BPFWP_VERSION', '2.3.17' );
 		}
 
 		/**
@@ -125,6 +121,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-about-us.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-blocks.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-dashboard.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-patterns.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-compatibility.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-admin-custom-fields.php';
@@ -156,6 +153,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			new bpfwpAdminCustomFields();
 			new bpfwpIntegrations(); // Deprecated in v1.1.
 			new bpfwpDeactivationSurvey();
+			new bpfwpDashboard();
 			new bpfwpReviewAsk();
 			new bpfwpInstallationWalkthrough();
 			
@@ -185,7 +183,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			register_activation_hook( __FILE__, 	array( $this, 'run_walkthrough' ) );
 
 			add_action( 'plugins_loaded',        array( $this, 'plugin_loaded_action_hook' ) );
-			add_action( 'plugins_loaded',        array( $this, 'load_textdomain' ) );
+			add_action( 'load_textdomain',        array( $this, 'load_textdomain' ) );
 			add_action( 'admin_notices',		 array( $this, 'display_header_area'), 99 );
 			add_action( 'admin_notices',         array( $this, 'maybe_display_helper_notice' ) );
 			add_action( 'admin_notices', 		 array( $this, 'maybe_display_new_plugin_notice' ) );
