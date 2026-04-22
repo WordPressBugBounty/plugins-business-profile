@@ -3,7 +3,7 @@
  * Plugin Name: Five Star Business Profile and Schema
  * Plugin URI:  https://www.fivestarplugins.com/plugins/business-profile/
  * Description: Add schema structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Map, opening hours and more.
- * Version:     2.3.17
+ * Version:     2.3.18
  * Author:      Five Star Plugins
  * Author URI:  https://www.fivestarplugins.com
  * License: GPLv3
@@ -107,7 +107,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			define( 'BPFWP_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_FNAME', plugin_basename( __FILE__ ) );
-			define( 'BPFWP_VERSION', '2.3.17' );
+			define( 'BPFWP_VERSION', '2.3.18' );
 		}
 
 		/**
@@ -478,25 +478,54 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 
 		public function maybe_display_new_plugin_notice() {
 
+			if ( ! current_user_can( 'activate_plugins' ) ) { return; }
+	
 			$screen = get_current_screen();
-	        if (!isset($screen->id) || strpos($screen->id, 'business-profile_page_') === false) { return; }
+			
+	        if ( ! isset( $screen->id ) ) { return; }
 	
-			if ( get_transient( 'bpfwp-ait-iat-plugin-notice-dismissed' ) ) { return; }
+	        $allowed_screens = array( 
+	        	'plugins', 
+	        	'update-core', 
+	        	'dashboard', 
+	        	'options-general', 
+	        	'options-writing', 
+	        	'options-reading', 
+	        	'options-discussion', 
+	        	'options-media',
+	        	'options-permalink',
+	        	'options-privacy'
+	        );
 	
-			// October 17th, 2025
-			if ( time() > 1760759940 ) { return; }
+	        if ( strpos( $screen->id, 'profile_page_' ) === false and 
+	        	 ! in_array( $screen->id, $allowed_screens ) ) { 
+	        	return; 
+	    	}
+	
+			if ( get_transient( 'ait-aiaa-plugin-notice-dismissed' ) ) { return; }
+	
+			// May 22nd, 2026
+			if ( time() > 1779508748 ) { return; }
+	
+			$hook_lines = array(
+				__( 'Tired of digging through settings? Let <strong>AI Admin Assistance</strong> guide you!', 'business-profile' ),
+				__( 'Stop wasting time searching for answers—use <strong>AI Admin Assistance</strong> to bring AI-powered help directly into your dashboard!', 'business-profile' ),
+				__( 'Overwhelmed in the WordPress admin? <strong>AI Admin Assistance</strong> has you covered with AI-powered help directly in your dashboard!', 'business-profile' ),
+			);
+	
+			$selection = array_rand( $hook_lines );
 	
 			?>
 	
-			<div class='notice notice-error is-dismissible ait-iat-new-plugin-notice'>
+			<div class='notice notice-error is-dismissible ait-aiaa-new-plugin-notice'>
 				
 				<div class='bpfwp-new-plugin-notice-img'>
-					<img src='<?php echo BPFWP_PLUGIN_URL . '/assets/img/ait-iat-plugin-icon.png' ; ?>' />
+					<img src='<?php echo BPFWP_PLUGIN_URL . '/assets/img/ait-aiaa-plugin-icon.png' ; ?>' />
 				</div>
 	
 				<div class='bpfwp-new-plugin-notice-txt'>
-					<p><?php _e( 'Want to improve your search rankings? Try our new <strong>AI Image Alt Text</strong> plugin!', 'business-profile' ); ?></p>
-					<p><?php echo sprintf( __( 'As a thank you to our customers, for a limited time you can get a <strong>free pro license</strong>! Try the <a target=\'_blank\' href=\'%s\'>free version</a> today or use code <code>early_adopter_pro</code> to <a target=\'_blank\' href=\'%s\'>get your pro version license</a>!', 'business-profile' ), admin_url( 'plugin-install.php?tab=plugin-information&plugin=ai-image-alt-text' ), 'https://www.wpaiplugins.dev/wordpress-image-alt-text-ai-plugin/' ); ?></p>
+					<p><?php echo $hook_lines[ $selection ]; ?></p>
+	                <p><?php echo sprintf( __( 'As a thank you to our customers, for a limited time you can get a <strong>free pro license</strong>! Try the <a target=\'_blank\' href=\'%s\'>free version</a> today or use code <code>early_adopter_pro</code> to <a target=\'_blank\' href=\'%s\'>get your pro version license</a>!', 'business-profile' ), admin_url( 'plugin-install.php?tab=plugin-information&plugin=ait-ai-admin-assistance' ), 'https://www.wpaiplugins.dev/wordpress-ai-admin-assistance/?utm_source=' . dirname( BPFWP_PLUGIN_FNAME ) . '_aiaa_notice&utm_content=' . $selection ); ?></p>
 				</div>
 	
 				<div class='bpfwp-clear'></div>
@@ -511,7 +540,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 	
 			// Authenticate request
 			if (
-				! check_ajax_referer( 'bpfwp-admin-js', 'nonce' )
+				! check_ajax_referer( 'bpfwp-helper-notice', 'nonce' )
 				||
 				! current_user_can( 'manage_options' )
 			) {
@@ -524,7 +553,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 	
 			}
 	
-			set_transient( 'bpfwp-ait-iat-plugin-notice-dismissed', true, 3600*24*7 );
+			set_transient( 'ait-aiaa-plugin-notice-dismissed', true, 3600*24*7 );
 	
 			die();
 		}

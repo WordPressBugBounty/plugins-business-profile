@@ -5,7 +5,7 @@ Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
 Tested Up To: 6.9
 Tags: business profile, seo, local seo, schema, address, google map, contact, phone, contact card, vcard, contact info, business location, business address, business map, business schema, organization schema, corporation schema, contact schema, address schema, location schema, map schema, business structured data, business microdata, address microdata, location structured data, location microdata, contact shortcode, location shortcode, address shortcode, schema shortcode, gutenberg schema, gutenberg address
-Stable tag: 2.3.17
+Stable tag: 2.3.18
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -235,6 +235,9 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 
 == Changelog ==
+
+= 2.3.18 (2026-04-22) =
+- Added a lot of in-admin help content, including guidance, support, links to applicable documentation and an AI assistant. It works via the AI Admin Assistance plugin (https://wordpress.org/plugins/ait-ai-admin-assistance/).
 
 = 2.3.17 (2026-02-03) =
 - Fix: _load_textdomain_just_in_time notice.

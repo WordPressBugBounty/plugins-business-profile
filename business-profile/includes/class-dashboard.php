@@ -93,6 +93,12 @@ class bpfwpDashboard {
 				<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full" id="bpfwp-dashboard-support-widget-box">
 					<div class="bpfwp-dashboard-new-widget-box-top">Get Support<span id="bpfwp-dash-mobile-support-down-caret">&nbsp;&nbsp;&#9660;</span><span id="bpfwp-dash-mobile-support-up-caret">&nbsp;&nbsp;&#9650;</span></div>
 					<div class="bpfwp-dashboard-new-widget-box-bottom">
+						<div class="bpfwp-dashboard-aiaa-support-notice">
+							<div class="bpfwp-dashboard-aiaa-support-notice-inside">
+								<span class="dashicons dashicons-info"></span>
+								<p><?php echo sprintf( __( 'Add help to each plugin adming screen! Install <a target=\'_blank\' href=\'%s\'>AI Admin Assistance</a> to view our in-admin help content!', 'business-profile' ), admin_url( 'plugin-install.php?tab=plugin-information&plugin=ait-ai-admin-assistance' ) ); ?></p>
+							</div>
+						</div>
 						<ul class="bpfwp-dashboard-support-widgets">
 							<li>
 								<a href="https://www.youtube.com/watch?v=Mq089tgCxkQ&list=PLEndQUuhlvSoOidQF7iRvstiKjOT4tX71" target="_blank">
