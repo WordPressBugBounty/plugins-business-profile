@@ -1071,25 +1071,42 @@ if ( ! function_exists( 'bpfwp_print_parent_organization' ) ) {
 
 function bpfwp_get_contact_card_fields() {
 	global $bpfwp_controller;
-	
-	return array_replace( 
-		(array) json_decode( $bpfwp_controller->settings->get_setting( 'contact-card-elements-order' ) ), 
-		array(
-			'name'                => 'bpwfwp_print_name',
-			'address'             => 'bpwfwp_print_address',
-			'phone'               => 'bpwfwp_print_phone',
-			'cell_phone'          => 'bpwfwp_print_cell_phone',
-			'whatsapp'            => 'bpwfwp_print_whatsapp_phone',
-			'fax_phone'           => 'bpwfwp_print_fax',
-			'ordering-link'       => 'bpfwp_print_ordering_link',
-			'custom_fields'       => 'bpfwp_print_custom_fields',
-			'contact'             => 'bpwfwp_print_contact',
-			'exceptions'          => 'bpwfwp_print_exceptions',
-			'opening_hours'       => 'bpwfwp_print_opening_hours', // opening-hours
-			'map'                 => 'bpwfwp_print_map',
-			'parent_organization' => 'bpfwp_print_parent_organization'
-		)
+
+	$callbacks = array(
+		'name'                => 'bpwfwp_print_name',
+		'address'             => 'bpwfwp_print_address',
+		'phone'               => 'bpwfwp_print_phone',
+		'cell_phone'          => 'bpwfwp_print_cell_phone',
+		'whatsapp'            => 'bpwfwp_print_whatsapp_phone',
+		'fax_phone'           => 'bpwfwp_print_fax',
+		'ordering-link'       => 'bpfwp_print_ordering_link',
+		'custom_fields'       => 'bpfwp_print_custom_fields',
+		'contact'             => 'bpwfwp_print_contact',
+		'exceptions'          => 'bpwfwp_print_exceptions',
+		'opening_hours'       => 'bpwfwp_print_opening_hours', // opening-hours
+		'map'                 => 'bpwfwp_print_map',
+		'parent_organization' => 'bpfwp_print_parent_organization',
 	);
+
+	$element_order = (array) json_decode(
+		$bpfwp_controller->settings->get_setting( 'contact-card-elements-order' )
+	);
+
+	$ordered_callbacks = array();
+
+	/**
+	 * The stored setting controls component order only. Callback values must
+	 * originate from the callback registry defined in PHP and must never be
+	 * derived from persisted setting values.
+	 */
+	foreach ( array_keys( $element_order ) as $component ) {
+		if ( array_key_exists( $component, $callbacks ) ) {
+			$ordered_callbacks[ $component ] = $callbacks[ $component ];
+			unset( $callbacks[ $component ] );
+		}
+	}
+
+	return $ordered_callbacks + $callbacks;
 }
 
 function bpfwp_get_time_label( $time ) {
@@ -1215,105 +1232,5 @@ function bpfwp_decode_infinite_table_setting( $values ) {
 	$values = $values ?? '';
 	
 	return is_array( json_decode( html_entity_decode( $values ) ) ) ? json_decode( html_entity_decode( $values ) ) : array();
-}
-}
-
-if ( ! function_exists ( 'bpfwp_get_blacklisted_callbacks' ) ) {
-function bpfwp_get_blacklisted_callbacks() {
-
-	$dangerous_functions = array(
-	    // Command execution / processes
-	    'system',
-	    'exec',
-	    'shell_exec',
-	    'passthru',
-	    'proc_open',
-	    'popen',
-	    'pcntl_exec',
-	
-	    // Dynamic code / evaluation
-	    'eval',             // not used as a callback, but block name anyway
-	    'assert',
-	    'create_function',
-	
-	    // File read/write
-	    'file_get_contents',
-	    'file_put_contents',
-	    'fopen',
-	    'fwrite',
-	    'fputs',
-	    'fprintf',
-	    'ftruncate',
-	    'unlink',
-	    'copy',
-	    'rename',
-	    'rmdir',
-	    'mkdir',
-	    'scandir',
-	    'glob',
-	    'readfile',
-	    'file',             // reads entire file into array
-	    'move_uploaded_file',
-	    'chmod',
-	    'chown',
-	    'chgrp',
-	    'symlink',
-	    'link',
-	    'tempnam',
-	
-	    // Network / sockets / external calls
-	    'fsockopen',
-	    'pfsockopen',
-	    'curl_exec',
-	    'curl_multi_exec',
-	    'stream_socket_client',
-	    'stream_socket_server',
-	
-	    // Environment manipulation / mail (optional, but often sensitive)
-	    'putenv',
-	    'apache_setenv',
-	    'mail',
-	);
-
-	return $dangerous_functions;
-} 
-}
-
-
-if ( ! function_exists ( 'bpfwp_is_callback_allowed' ) ) {
-function bpfwp_is_callback_allowed( $callback ) {
-	$dangerous_functions = bpfwp_get_blacklisted_callbacks();
-
-	// Disallow closures entirely (you can't inspect them safely)
-    if ( $callback instanceof Closure ) {
-        return false;
-    }
-
-    // Simple function name
-    if ( is_string( $callback ) ) {
-        $name = strtolower( ltrim( $callback, '\\' ) );
-        return ! in_array( $name, $dangerous_functions, true );
-    }
-
-    // Array callback: [object|string, 'method']
-    if ( is_array( $callback ) && count( $callback ) === 2 ) {
-        $method = strtolower( $callback[1] );
-
-        // Optionally reuse same list for methods
-        if ( in_array( $method, $dangerous_functions, true ) ) {
-            return false;
-        }
-
-        // Optional: block certain classes / namespaces
-        if ( is_string( $callback[0] ) ) {
-            $class = ltrim( $callback[0], '\\' );
-            // Example: disallow callbacks from some class
-            // if ( $class === 'DangerousClass' ) return false;
-        }
-
-        return true;
-    }
-
-    return false;
 }
 }

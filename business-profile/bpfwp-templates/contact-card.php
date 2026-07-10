@@ -112,7 +112,7 @@ $json_ld_data = array( 'type' => bpfwp_setting( 'schema-type', bpfwp_get_display
     <?php 
     foreach ( $data as $data => $callback ) { 
 
-        if ( is_callable( $callback ) && bpfwp_is_callback_allowed( $callback ) ) {
+        if ( is_callable( $callback ) ) {
             $return_array = call_user_func( $callback, bpfwp_get_display( 'location' ) );
             if ( is_array( $return_array ) ) { $json_ld_data = array_merge_recursive( $json_ld_data, $return_array ); }
         }

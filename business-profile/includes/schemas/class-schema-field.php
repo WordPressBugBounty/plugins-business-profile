@@ -151,8 +151,12 @@ if ( ! class_exists( 'bpfwpSchemaField' ) ) :
 					$command = substr($command, strpos($command, ' ') + 1); 
 				} 
 
-				if ( function_exists($command) ) { $value = $command( ...$args ); }
-				else { $value = false; }
+				if ( function_exists( $command ) && in_array( $command, $this->get_allowed_callback_functions(), true ) ) {
+					$value = $command( ...$args );
+				}
+				else {
+					$value = false;
+				}
 			}
 
 			elseif ( $operation == 'option' ) {
@@ -170,6 +174,45 @@ if ( ! class_exists( 'bpfwpSchemaField' ) ) :
 			}
 
 			return $value;
+		}
+
+		/**
+		 * Get the functions that schema field callbacks are allowed to invoke.
+		 *
+		 * @return array $allowed_functions The allowed callback function names.
+		 */
+		protected function get_allowed_callback_functions() {
+		
+			global $bpfwp_controller;
+		
+			$allowed_functions = array(
+				'get_permalink',
+				'get_the_author',
+				'get_the_author_meta',
+				'get_the_permalink',
+			);
+		
+			if ( isset( $bpfwp_controller->cpts ) ) {
+				foreach ( $bpfwp_controller->cpts->get_helper_function_options() as $helper_function ) {
+					if ( isset( $helper_function['value'] ) && is_string( $helper_function['value'] ) ) {
+						$allowed_functions[] = $helper_function['value'];
+					}
+				}
+			}
+		
+			$allowed_functions = apply_filters(
+				'bpfwp_schema_field_allowed_functions',
+				$allowed_functions
+			);
+		
+			return array_values(
+				array_unique(
+					array_filter(
+						(array) $allowed_functions,
+						'is_string'
+					)
+				)
+			);
 		}
 	}
 endif;

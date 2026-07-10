@@ -5,7 +5,7 @@ Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
 Tested Up To: 7.0
 Tags: business profile, contact card, schema, structured data, google map
-Stable tag: 2.3.19
+Stable tag: 2.3.20
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -235,6 +235,9 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 
 == Changelog ==
+
+= 2.3.20 (2026-07-10) =
+- Patch for reported Patchstack vulnerability.
 
 = 2.3.19 (2026-05-18) =
 - Fixed deprecated notices.
