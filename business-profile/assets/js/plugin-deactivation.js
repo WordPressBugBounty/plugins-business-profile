@@ -1,6 +1,7 @@
 jQuery(function($){
 	var $deactivateLink = $('#the-list').find('[data-slug="business-profile"] span.deactivate a'),
 		$overlay        = $('#bpfwp-deactivate-survey-business-profile'),
+		$cancelButton   = $('#bpfwp-deactivation-cancel'),
 		$form           = $overlay.find('form'),
 		formOpen        = false;
 	// Plugin listing table deactivate link.
@@ -9,6 +10,11 @@ jQuery(function($){
 		$overlay.css('display', 'table');
 		formOpen = true;
 		$form.find('.bpfwp-deactivate-survey-option:first-of-type input[type=radio]').focus();
+	});
+	// Exit the survey without deactivating or submitting the form
+	$cancelButton.on( 'click', function( event ) {
+	 	$overlay.css('display', 'none');
+	 	formOpen = false;
 	});
 	// Survey radio option selected.
 	$form.on('change', 'input[type=radio]', function(event) {

@@ -40,6 +40,11 @@
 	color: #999;
 	margin-right: 10px;
 }
+#bpfwp-deactivation-cancel {
+	display: inline-block;
+    float: right;
+    cursor: pointer;
+}
 .bpfwp-deactivate-survey-desc {
 	display: block;
 	font-weight: 600;

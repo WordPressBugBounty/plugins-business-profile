@@ -55,8 +55,8 @@ class bpfwpDeactivationSurvey {
 		<div class="bpfwp-deactivate-survey-modal" id="bpfwp-deactivate-survey-business-profile">
 			<div class="bpfwp-deactivate-survey-wrap">
 				<form class="bpfwp-deactivate-survey" method="post" data-installtime="<?php echo esc_attr( $install_time ); ?>">
-					<span class="bpfwp-deactivate-survey-title"><span class="dashicons dashicons-testimonial"></span><?php echo ' ' . __( 'Quick Feedback', 'business-profile' ); ?></span>
-					<span class="bpfwp-deactivate-survey-desc"><?php echo __('If you have a moment, please share why you are deactivating Five-Star Business Profile:', 'business-profile' ); ?></span>
+					<span class="bpfwp-deactivate-survey-title"><span class="dashicons dashicons-testimonial"></span><?php echo ' ' . __( 'Quick Feedback', 'business-profile' ); ?><span id="bpfwp-deactivation-cancel">X</span></span>
+					<span class="bpfwp-deactivate-survey-desc"><?php echo __('Need help? Contact us at <a href="mailto:contact@fivestarplugins.com">contact@fivestarplugins.com</a> for a quick reply!<br/> Please share why you are deactivating Five-Star Business Profile:', 'business-profile' ); ?></span>
 					<div class="bpfwp-deactivate-survey-options">
 						<?php foreach ( $options as $id => $option ) : ?>
 							<div class="bpfwp-deactivate-survey-option">
