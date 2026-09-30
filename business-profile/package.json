@@ -1,0 +1,11 @@
+{
+  "name": "business-profile-editor-build",
+  "private": true,
+  "scripts": {
+    "build": "node tools/build-blocks.cjs",
+    "build:check": "node tools/build-blocks.cjs --check"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

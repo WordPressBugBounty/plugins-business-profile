@@ -135,45 +135,8 @@ if ( ! class_exists( 'bpfwpSchemaField' ) ) :
 		 * @return mixed $value 
 		 */
 		public function get_default_value( $object_id, $object_type = 'post' ) {
-			
-			if ( ! isset($this->callback) ) { return; }
-
-			if ( strpos($this->callback, ' ') === false ) { return $this->callback; }
-
-			$operation = substr($this->callback, 0, strpos($this->callback, ' '));
-			$command = substr($this->callback, strpos($this->callback, ' ') + 1);
-
-			if ( $operation == 'function' ) {
-
-				$args = array();
-				while ( strpos($command, ' ') !== false ) { 
-					$args[] = substr($command, 0, strpos($command, ' '));
-					$command = substr($command, strpos($command, ' ') + 1); 
-				} 
-
-				if ( function_exists( $command ) && in_array( $command, $this->get_allowed_callback_functions(), true ) ) {
-					$value = $command( ...$args );
-				}
-				else {
-					$value = false;
-				}
-			}
-
-			elseif ( $operation == 'option' ) {
-				$value = get_option($command);
-			} 
-
-			elseif ( $operation == 'meta' ) {
-				if ( $object_type == 'post' ) { $value = get_post_meta( $object_id, $command, true ); }
-				if ( $object_type == 'taxonomy' ) { $value = get_term_meta( $object_id, $command, true ); }
-			}
-
-			// Not a valid operation, so return the entire string as the value
-			else { 
-				$value = $operation . ' ' . $command;
-			}
-
-			return $value;
+			require_once dirname( __DIR__ ) . '/class-schema-source-policy.php';
+			return bpfwpSchemaSourcePolicy::resolve( $this->callback, $object_id, $object_type );
 		}
 
 		/**

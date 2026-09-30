@@ -89,60 +89,63 @@ if ( ! function_exists( 'bpwfwp_print_contact_card' ) ) {
 
 		global $bpfwp_controller;
 
-		// Define shortcode attributes.
-		$bpfwp_controller->display_settings = shortcode_atts(
-			$bpfwp_controller->settings->get_default_display_settings(),
-			$args,
-			'contact-card'
-		);
+		$previous_display = $bpfwp_controller->display_settings;
+		try {
+			// Define shortcode attributes.
+			$bpfwp_controller->display_settings = shortcode_atts(
+				$bpfwp_controller->settings->get_default_display_settings(),
+				$args,
+				'contact-card'
+			);
 
-		// Check if location is allowed to be viewed
-		$location_id = bpfwp_get_display( 'location' );
-		if ( $location_id && !current_user_can( 'edit_location', $location_id ) && get_post_status( $location_id ) !== 'publish' ) {
-			return apply_filters( 'bpwfwp_protected_contact_card_output', '' );
-		}
-
-		// Setup components and callback functions to render them.
-		$data = apply_filters(
-			'bpwfwp_component_callbacks',
-			bpfwp_get_contact_card_fields()
-		);
-
-		if ( ! $bpfwp_controller->get_theme_support( 'disable_styles' ) ) {
-			/**
-			 * Filter to override whether the frontend stylesheets are loaded.
-			 *
-			 * This is deprecated in favor of add_theme_support(). To prevent
-			 * styles from being loaded, add the following to your theme:
-			 *
-			 * add_theme_support( 'business-profile', array( 'disable_styles' => true ) );
-			 */
-			if ( apply_filters( 'bpfwp-load-frontend-assets', true ) ) {
-				wp_enqueue_style( 'dashicons' );
-				wp_enqueue_style( 'bpfwp-default' );
+			// Check if location is allowed to be viewed
+			$location_id = bpfwp_get_display( 'location' );
+			$preview     = $location_id && is_preview() && current_user_can( 'edit_post', $location_id );
+			if ( $location_id && ! bpfwpLocationPublication::eligible( $location_id ) && ! $preview ) {
+						return apply_filters( 'bpwfwp_protected_contact_card_output', '' );
 			}
+
+			// Setup components and callback functions to render them.
+			$data = apply_filters(
+				'bpwfwp_component_callbacks',
+				bpfwp_get_contact_card_fields()
+			);
+
+			if ( ! $bpfwp_controller->get_theme_support( 'disable_styles' ) ) {
+				/**
+				 * Filter to override whether the frontend stylesheets are loaded.
+				 *
+				 * This is deprecated in favor of add_theme_support(). To prevent
+				 * styles from being loaded, add the following to your theme:
+				 *
+				 * add_theme_support( 'business-profile', array( 'disable_styles' => true ) );
+				 */
+				if ( apply_filters( 'bpfwp-load-frontend-assets', true ) ) {
+					wp_enqueue_style( 'dashicons' );
+					wp_enqueue_style( 'bpfwp-default' );
+				}
+			}
+
+			ob_start();
+			$template = new bpfwpTemplateLoader();
+			$template->set_template_data( $data );
+
+			// Custom styling
+			$styling = bpfwp_add_custom_styling();
+			echo $styling;
+
+			if ( bpfwp_get_display( 'location' ) ) {
+				$template->get_template_part( 'contact-card', bpfwp_get_display( 'location' ) );
+			} else {
+				$template->get_template_part( 'contact-card' );
+			}
+
+			$output = ob_get_clean();
+
+			return apply_filters( 'bpwfwp_contact_card_output', $output );
+		} finally {
+			$bpfwp_controller->display_settings = $previous_display;
 		}
-
-		ob_start();
-		$template = new bpfwpTemplateLoader;
-		$template->set_template_data( $data );
-
-		// Custom styling
-		$styling = bpfwp_add_custom_styling();
-		echo $styling;
-
-		if ( bpfwp_get_display( 'location' ) ) {
-			$template->get_template_part( 'contact-card', bpfwp_get_display( 'location' ) );
-		} else {
-			$template->get_template_part( 'contact-card' );
-		}
-
-		$output = ob_get_clean();
-
-		// Reset display settings.
-		$bpfwp_controller->display_settings = $bpfwp_controller->settings->get_default_display_settings();
-
-		return apply_filters( 'bpwfwp_contact_card_output', $output );
 	}
 
 	if ( ! shortcode_exists( 'contact-card' ) ) {
@@ -531,7 +534,8 @@ if ( ! function_exists( 'bpwfwp_print_contact' ) ) {
 		if ( ! empty( $email ) ) :
 			$antispam_email = antispambot( $email );
 
-			if ( bpfwp_get_display( 'show_contact' ) ) : ?>
+			if ( bpfwp_get_display( 'show_contact' ) ) :
+				?>
 
 				<div class="bp-contact bp-contact-email">
 					<a href="mailto:<?php echo esc_attr( $antispam_email ); ?>"><?php echo esc_html( $antispam_email ); ?></a>
@@ -541,13 +545,17 @@ if ( ! function_exists( 'bpwfwp_print_contact' ) ) {
 
 			<?php $return_data['email'] = $antispam_email; ?>
 
-		<?php
+			<?php
 			return $return_data;
 		endif;
 
 		$contact = bpfwp_setting( 'contact-page', $location );
+		$target  = $contact ? get_post( $contact ) : null;
+		if ( $target && ( 'publish' !== $target->post_status || $target->post_password || ( bpfwpLocationPublication::post_type() === $target->post_type && ! bpfwpLocationPublication::eligible( $target->ID ) ) ) ) {
+			$contact = 0;
+		}
 		if ( ! empty( $contact ) && bpfwp_get_display( 'show_contact' ) ) :
-		?>
+			?>
 
 		<div class="bp-contact bp-contact-page">
 			<a href="<?php echo esc_url( get_permalink( $contact ) ); ?>">
@@ -555,13 +563,13 @@ if ( ! function_exists( 'bpwfwp_print_contact' ) ) {
 			</a>
 		</div>
 
-		<?php
-		$return_data['ContactPoint'] = array(
-			array(
-				'contactType' => 'customer support',
-				'url' => get_permalink( $contact ),
-			)
-		);
+			<?php
+			$return_data['ContactPoint'] = array(
+				array(
+					'contactType' => 'customer support',
+					'url'         => get_permalink( $contact ),
+				),
+			);
 
 		endif;
 
@@ -588,7 +596,19 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 		}
 
 		// Get the opening hours in a returnable format
-		$return_data = bpfwp_get_opening_hours_array( $hours );
+		require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
+		$schedule = bpfwpBusinessHours::normalize( $hours, array() );
+		$hours    = array();
+		foreach ( bpfwpBusinessHours::weekdays() as $index => $day ) {
+			foreach ( bpfwpBusinessHours::for_date( $schedule, bpfwpBusinessHours::shift_date( '2000-01-03', $index ) ) as $interval ) {
+				$row = array( 'weekdays' => array( $day => 1 ) );
+				if ( array( 0, 1440 ) !== $interval ) {
+					$row['time'] = bpfwpBusinessHours::display_time( $schedule, $day, $interval );
+				}
+				$hours[] = $row;
+			}
+		}
+		$return_data = array( 'openingHoursSpecification' => bpfwpBusinessHours::weekly_schema( $schedule ) );
 
 		if ( ! bpfwp_get_display( 'show_opening_hours' ) ) {
 			return;
@@ -598,7 +618,7 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 
 		// Output display format.
 		if ( bpfwp_get_display( 'show_opening_hours_brief' ) ) :
-		?>
+			?>
 
 		<div class="bp-opening-hours-brief">
 
@@ -611,15 +631,15 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 					continue;
 				}
 
-				$days = array();
+				$days          = array();
 				$weekdays_i18n = array(
-					'monday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-monday-abbreviation' ) ),
-					'tuesday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-tuesday-abbreviation' ) ),
-					'wednesday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-wednesday-abbreviation' ) ),
-					'thursday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-thursday-abbreviation' ) ),
-					'friday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-friday-abbreviation' ) ),
-					'saturday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-saturday-abbreviation' ) ),
-					'sunday'	=> esc_html( $bpfwp_controller->settings->get_setting( 'label-sunday-abbreviation' ) ),
+					'monday'    => esc_html( $bpfwp_controller->settings->get_setting( 'label-monday-abbreviation' ) ),
+					'tuesday'   => esc_html( $bpfwp_controller->settings->get_setting( 'label-tuesday-abbreviation' ) ),
+					'wednesday' => esc_html( $bpfwp_controller->settings->get_setting( 'label-wednesday-abbreviation' ) ),
+					'thursday'  => esc_html( $bpfwp_controller->settings->get_setting( 'label-thursday-abbreviation' ) ),
+					'friday'    => esc_html( $bpfwp_controller->settings->get_setting( 'label-friday-abbreviation' ) ),
+					'saturday'  => esc_html( $bpfwp_controller->settings->get_setting( 'label-saturday-abbreviation' ) ),
+					'sunday'    => esc_html( $bpfwp_controller->settings->get_setting( 'label-sunday-abbreviation' ) ),
 				);
 				foreach ( $slot['weekdays'] as $day => $val ) {
 					$days[] = $weekdays_i18n[ $day ];
@@ -639,34 +659,38 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 					}
 
 					if ( empty( $start ) ) {
-						$string = sprintf( _x( '%s open until %s', 'Brief opening hours description which lists the days followed by the closing time. Example: Mo,Tu,We open until 9:00pm', 'business-profile' ), $days_string, $end->format( get_option( 'time_format' ) ) );
+						/* translators: 1: Weekday list, 2: Closing time. */
+						$string = sprintf( _x( '%1$s open until %2$s', 'Brief opening hours description which lists the days followed by the closing time. Example: Mo,Tu,We open until 9:00pm', 'business-profile' ), $days_string, $end->format( get_option( 'time_format' ) ) );
 					} elseif ( empty( $end ) ) {
-						$string = sprintf( _x( '%s open from %s', 'Brief opening hours description which lists the days followed by the opening time. Example: Mo,Tu,We open from 9:00am', 'business-profile' ), $days_string, $start->format( get_option( 'time_format' ) ) );
+						/* translators: 1: Weekday list, 2: Opening time. */
+						$string = sprintf( _x( '%1$s open from %2$s', 'Brief opening hours description which lists the days followed by the opening time. Example: Mo,Tu,We open from 9:00am', 'business-profile' ), $days_string, $start->format( get_option( 'time_format' ) ) );
 					} else {
-						$string = sprintf( _x( '%s %s&thinsp;&ndash;&thinsp;%s', 'Brief opening hours description which lists the days followed by the opening and closing times. Example: Mo,Tu,We 9:00am&thinsp;&ndash;&thinsp;5:00pm', 'business-profile' ), $days_string, $start->format( get_option( 'time_format' ) ),  $end->format( get_option( 'time_format' ) ) );
+						/* translators: 1: Weekday list, 2: Opening time, 3: Closing time. */
+						$string = sprintf( _x( '%1$s %2$s&thinsp;&ndash;&thinsp;%3$s', 'Brief opening hours description which lists the days followed by the opening and closing times. Example: Mo,Tu,We 9:00am&thinsp;&ndash;&thinsp;5:00pm', 'business-profile' ), $days_string, $start->format( get_option( 'time_format' ) ), $end->format( get_option( 'time_format' ) ) );
 					}
 				}
 
 				$slots[] = $string;
 			}
 
+			/* translators: 1: Weekday list, 2: Opening time, 3: Closing time. */
 			echo join( _x( '; ', 'Separator between multiple opening times in the brief opening hours. Example: Mo,We 9:00 AM&thinsp;&ndash;&thinsp;5:00 PM; Tu,Th 10:00 AM&thinsp;&ndash;&thinsp;5:00 PM', 'business-profile' ), $slots );
 			?>
 
 		</div>
 
-		<?php
+			<?php
 			return $return_data;
 		endif; // Brief opening hours.
 
 		$weekdays_display = array(
-			'monday'	=> $bpfwp_controller->settings->get_setting( 'label-monday'),
-			'tuesday'	=> $bpfwp_controller->settings->get_setting( 'label-tuesday'),
-			'wednesday'	=> $bpfwp_controller->settings->get_setting( 'label-wednesday'),
-			'thursday'	=> $bpfwp_controller->settings->get_setting( 'label-thursday'),
-			'friday'	=> $bpfwp_controller->settings->get_setting( 'label-friday'),
-			'saturday'	=> $bpfwp_controller->settings->get_setting( 'label-saturday'),
-			'sunday'	=> $bpfwp_controller->settings->get_setting( 'label-sunday'),
+			'monday'    => $bpfwp_controller->settings->get_setting( 'label-monday' ),
+			'tuesday'   => $bpfwp_controller->settings->get_setting( 'label-tuesday' ),
+			'wednesday' => $bpfwp_controller->settings->get_setting( 'label-wednesday' ),
+			'thursday'  => $bpfwp_controller->settings->get_setting( 'label-thursday' ),
+			'friday'    => $bpfwp_controller->settings->get_setting( 'label-friday' ),
+			'saturday'  => $bpfwp_controller->settings->get_setting( 'label-saturday' ),
+			'sunday'    => $bpfwp_controller->settings->get_setting( 'label-sunday' ),
 		);
 
 		$weekdays = array();
@@ -681,7 +705,7 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 				$time = __( 'Open', 'business-profile' );
 
 			} else {
-
+				unset( $start, $end );
 				if ( ! empty( $rule['time']['start'] ) ) {
 					$start = new DateTime( $rule['time']['start'], $tz );
 				}
@@ -694,6 +718,7 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 				} elseif ( empty( $end ) ) {
 					$time = __( 'Open from ', 'business-profile' ) . $start->format( get_option( 'time_format' ) );
 				} else {
+					/* translators: 1: Weekday list, 2: Opening time, 3: Closing time. */
 					$time = $start->format( get_option( 'time_format' ) ) . _x( '&thinsp;&ndash;&thinsp;', 'Separator between opening and closing times. Example: 9:00am&thinsp;&ndash;&thinsp;5:00pm', 'business-profile' ) . $end->format( get_option( 'time_format' ) );
 				}
 			}
@@ -725,7 +750,7 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 				'weekday_names' => $weekdays_display,
 			);
 
-			$template = new bpfwpTemplateLoader;
+			$template = new bpfwpTemplateLoader();
 			$template->set_template_data( $data );
 
 			if ( bpfwp_get_display( 'location' ) ) {
@@ -750,70 +775,25 @@ if ( ! function_exists( 'bpfwp_get_opening_hours_array' ) ) {
 	 */
 	function bpfwp_get_opening_hours_array( $hours ) {
 
-		$opening_hours = array();
-
-		$weekdays_schema = array(
-			'monday'	=> 'Mo',
-			'tuesday'	=> 'Tu',
-			'wednesday'	=> 'We',
-			'thursday'	=> 'Th',
-			'friday'	=> 'Fr',
-			'saturday'	=> 'Sa',
-			'sunday'	=> 'Su',
+		require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
+		$schedule = bpfwpBusinessHours::normalize( $hours, array() );
+		$days     = array(
+			'Monday'    => 'Mo',
+			'Tuesday'   => 'Tu',
+			'Wednesday' => 'We',
+			'Thursday'  => 'Th',
+			'Friday'    => 'Fr',
+			'Saturday'  => 'Sa',
+			'Sunday'    => 'Su',
 		);
-
-		// Output proper schema.org format.
-		foreach ( $hours as $slot ) {
-
-			// Skip this entry if no weekdays are set.
-			if ( empty( $slot['weekdays'] ) ) {
-				continue;
-			}
-
-			$days = array();
-			foreach ( $slot['weekdays'] as $day => $val ) {
-				$days[] = $weekdays_schema[ $day ];
-			}
-			$string = ! empty( $days ) ? join( ',', $days ) : '';
-
-			if ( ! empty( $string ) && ! empty( $slot['time'] ) ) {
-
-				if ( empty( $slot['time']['start'] ) ) {
-					$start = '00:00';
-				} else {
-					$start = trim( substr( $slot['time']['start'], 0, -2 ) );
-					if ( 'PM' === substr( $slot['time']['start'], -2 ) ) {
-						$split = explode( ':', $start );
-						$split[0] += intval($split[0]) == 12 ? 0 : 12;
-						$start = join( ':', $split );
-					}
-					if ( 'AM' === substr( $slot['time']['start'], -2 ) && '12:00' === $start ) {
-						$start = '00:00';
-					}
-				}
-
-				if ( empty( $slot['time']['end'] ) ) {
-					$end = '24:00';
-				} else {
-					$end = trim( substr( $slot['time']['end'], 0, -2 ) );
-					if ( 'PM' === substr( $slot['time']['end'], -2 ) ) {
-						$split = explode( ':', $end );
-						$split[0] += intval($split[0]) == 12 ? 0 : 12;
-						$end = join( ':', $split );
-					}
-					if ( ! empty( $slot['time']['end'] ) && 'AM' === substr( $slot['time']['end'], -2 ) && '12:00' === $end ) {
-						$end = '24:00';
-					}
-				}
-
-				$string .= ' ' . $start . '-' . $end;
-			}
-			
-			$opening_hours[] = '"' . $string . '"';
+		$values   = array();
+		foreach ( bpfwpBusinessHours::weekly_schema( $schedule ) as $rule ) {
+			$day      = basename( $rule['dayOfWeek'] );
+			$values[] = $days[ $day ] . ' ' . $rule['opens'] . '-' . $rule['closes'];
 		}
-
-		return array( 'openingHours' => '[' . implode( ',', $opening_hours ) . ']' );
+		return array( 'openingHours' => wp_json_encode( $values ) );
 	}
+
 }
 
 if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
@@ -827,114 +807,42 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 	 */
 	function bpwfwp_print_exceptions( $location = false ) {
 		global $bpfwp_controller;
-
-		$disable_main_exceptions = get_post_meta( $location, 'disable_main_exceptions', true );
-
-		$exceptions = ( $disable_main_exceptions and $location ) ? get_post_meta( $location, 'exceptions', true ) : bpfwp_setting( 'exceptions', $location );
-		
-		if ( empty( $exceptions ) || ! bpfwp_get_display( 'show_opening_hours' ) || ! function_exists( 'wp_date' ) ) {
+		require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
+		$explicit     = bpfwpBusinessData::explicit_value( $bpfwp_controller->settings, 'exceptions', $location );
+		$legacy_local = $location && get_post_meta( $location, 'disable_main_exceptions', true );
+		$exceptions   = null === $explicit && $legacy_local ? get_post_meta( $location, 'exceptions', true ) : bpfwp_setting( 'exceptions', $location );
+		$schedule     = bpfwpBusinessHours::normalize( bpfwp_setting( 'opening-hours', $location ), $exceptions );
+		$records      = bpfwpBusinessHours::exception_schema( $schedule );
+		if ( ! $records || ! bpfwp_get_display( 'show_opening_hours' ) ) {
 			return '';
 		}
-
-		// sort exceptions by date
-		usort( $exceptions, array( $bpfwp_controller->settings, 'sort_by_date' ) );
-
-		// Print the metatags with proper schema formatting.
-		$return_data = bpfwp_get_exceptions_array( $exceptions );
-
-		$date_format = get_option('date_format');
-		$time_format = get_option('time_format');
-
-		$tz = new DateTimeZone( wp_timezone_string() );
-
-		$data = array(
-			'special_hours' => array(),
-			'holiday'       => array()
-		);
-
-		foreach ( $exceptions as $exception ) {
-
-			if ( empty( $exception['date'] ) and empty( $exception['date_range'] ) ) { continue; }
-
-			if ( ( time() > strtotime( $exception['date'] ) + 24*3600 ) and ( time() > strtotime( $exception['date_range']['end'] ) + 24*3600 ) ) { continue; }
-			
-			if ( array_key_exists( 'time', $exception ) ) {
-				// special opening-hours
-				$data['special_hours'][] = $exception;
+		$timezone = wp_timezone();
+		$today    = ( new DateTimeImmutable( 'now', $timezone ) )->format( 'Y-m-d' );
+		echo '<div class="bp-opening-hours special"><span class="bp-title">' . esc_html( $bpfwp_controller->settings->get_setting( 'label-special-opening-hours' ) ) . '</span>';
+		foreach ( $records as $record ) {
+			if ( isset( $record['validThrough'] ) && $record['validThrough'] < $today ) {
+				continue;
 			}
-			else {
-				// holiday
-				$data['holiday'][] = $exception;
+			$from = isset( $record['validFrom'] ) ? wp_date( get_option( 'date_format' ), ( new DateTimeImmutable( $record['validFrom'], $timezone ) )->getTimestamp(), $timezone ) : __( 'No start date', 'business-profile' );
+			$to   = isset( $record['validThrough'] ) ? wp_date( get_option( 'date_format' ), ( new DateTimeImmutable( $record['validThrough'], $timezone ) )->getTimestamp(), $timezone ) : __( 'No end date', 'business-profile' );
+			/* translators: 1: Start date, 2: End date. */
+			$label = $from === $to ? $from : sprintf( __( '%1$s to %2$s', 'business-profile' ), $from, $to );
+			if ( '00:00' === $record['opens'] && '00:00' === $record['closes'] ) {
+				$time = $bpfwp_controller->settings->get_setting( 'label-closed' );
+			} else {
+				$start = new DateTimeImmutable( '2000-01-01 ' . $record['opens'], $timezone );
+				$end   = new DateTimeImmutable( '2000-01-01 ' . $record['closes'], $timezone );
+				$time  = wp_date( get_option( 'time_format' ), $start->getTimestamp(), $timezone ) . ' - ' . wp_date( get_option( 'time_format' ), $end->getTimestamp(), $timezone );
+				if ( $record['closes'] < $record['opens'] ) {
+					$time .= ' ' . __( '(next day)', 'business-profile' );
+				}
 			}
+			echo '<div class="bp-date"><span class="label">' . esc_html( $label ) . '</span><span class="bp-times"><span class="bp-time">' . esc_html( $time ) . '</span></span></div>';
 		}
-
-		usort( $data['special_hours'], array( $bpfwp_controller->settings, 'sort_by_date' ) );
-		usort( $data['holiday'], array( $bpfwp_controller->settings, 'sort_by_date' ) );
-
-		if ( 0 < count( $data['special_hours'] ) ) { ?>
-			
-			<div class="bp-opening-hours special">
-				<span class="bp-title"><?php echo esc_html( $bpfwp_controller->settings->get_setting( 'label-special-opening-hours' ) ); ?></span>
-			
-				<?php foreach ( $data['special_hours'] as $exception ) { ?>
-				
-					<?php 
-						$start_date  = ! empty( $exception['date_range']['start'] ) ? new DateTime( $exception['date_range']['start'], $tz ) : null;
-						$end_date    = ! empty( $exception['date_range']['end'] ) ? new DateTime( $exception['date_range']['end'], $tz ) : null;
-						$date        = ! empty( $exception['date'] ) ? new DateTime( $exception['date'], $tz ) : null;
-						$start       = new DateTime( $exception['time']['start'], $tz );
-						$end         = new DateTime( $exception['time']['end'], $tz );
-					?>
-
-					<div class="bp-date">
-						<span class="label">
-							<?php echo ( $date ? wp_date( $date_format, $date->format( 'U' ) ) : wp_date( $date_format, $start_date->format( 'U' ) ) . ' ' . __( 'to', 'business-profile' ) . ' ' . wp_date( $date_format, $end_date->format( 'U' ) ) ); ?>
-						</span>
-						<span class="bp-times">
-							<span class="bp-time">
-								<?php 
-									echo wp_date( $time_format, $start->format( 'U' ) ) 
-										. ' – ' 
-										. wp_date( $time_format, $end->format( 'U' ) );
-								?>
-							</span>
-						</span>
-					</div>
-				<?php } ?>
-
-			</div>
-		<?php }
-
-		if ( 0 < count( $data['holiday'] ) ) { ?>
-
-			<div class="bp-opening-hours holiday">
-				<span class="bp-title"><?php echo esc_html( $bpfwp_controller->settings->get_setting( 'label-holidays' ) ); ?></span>
-
-				<?php foreach ( $data['holiday'] as $exception ) { ?>
-				
-					<?php 
-						$start_date  = ! empty( $exception['date_range']['start'] ) ? new DateTime( $exception['date_range']['start'], $tz ) : null;
-						$end_date    = ! empty( $exception['date_range']['end'] ) ? new DateTime( $exception['date_range']['end'], $tz ) : null;
-						$date        = ! empty( $exception['date'] ) ? new DateTime( $exception['date'], $tz ) : null;
-					 ?>
-				
-					<div class="bp-date">
-						<span class="label">
-							<?php echo ( $date ? wp_date( $date_format, $date->format( 'U' ) ) : wp_date( $date_format, $start_date->format( 'U' ) ) . ' ' . __( 'to', 'business-profile' ) . ' ' . wp_date( $date_format, $end_date->format( 'U' ) ) ); ?>
-						</span>
-						<span class="bp-times">
-							<span class="bp-time">
-								<?php echo esc_html( $bpfwp_controller->settings->get_setting( 'label-closed' ) ); ?>
-							</span>
-						</span>
-					</div>
-				<?php } ?>
-
-			</div>
-		<?php }
-
-		return $return_data;
+		echo '</div>';
+		return array( 'specialOpeningHoursSpecification' => $records );
 	}
+
 }
 
 if ( ! function_exists( 'bpfwp_get_exceptions_array' ) ) {
@@ -947,34 +855,12 @@ if ( ! function_exists( 'bpfwp_get_exceptions_array' ) ) {
 	 * @return array
 	 */
 	function bpfwp_get_exceptions_array( $exceptions ) {
-		
-		$result = array();
 
-		if ( is_array( $exceptions ) ) {
-			
-			foreach ( $exceptions as $exception ) {
-				// Special opening-hours
-				// @type: specialOpeningHoursSpecification
-				$special_hours = array(
-					'type'         => 'openingHoursSpecification',
-					'validFrom'    => $exception['date'],
-					'validThrough' => $exception['date']
-				);
-				
-				if ( array_key_exists( 'time', $exception ) ) {
-					$special_hours['opens']  = $exception['time']['start'];
-					$special_hours['closes'] = $exception['time']['end'];
-				}
-				else {
-					// without opens it is considered as close - holiday
-				}
-
-				$result['specialOpeningHoursSpecification'][] = $special_hours;
-			}
-		}
-
-		return $result;
+		require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
+		$schedule = bpfwpBusinessHours::normalize( array(), $exceptions );
+		return array( 'specialOpeningHoursSpecification' => bpfwpBusinessHours::exception_schema( $schedule ) );
 	}
+
 }
 
 
@@ -1007,11 +893,12 @@ if ( ! function_exists( 'bpwfwp_print_map' ) ) {
 				'bpfwp_map',
 				array(
 					// Override loading and intialization of Google Maps api.
-					'google_maps_api_key' => bpfwp_setting( 'google-maps-api-key' ),
+					'google_maps_api_key'  => bpfwp_setting( 'google-maps-api-key' ),
 					'autoload_google_maps' => apply_filters( 'bpfwp_autoload_google_maps', true ),
-					'map_options' => apply_filters( 'bpfwp_google_map_options', array() ),
-					'strings' => array(
+					'map_options'          => apply_filters( 'bpfwp_google_map_options', array() ),
+					'strings'              => array(
 						'getDirections' => $bpfwp_controller->settings->get_setting( 'label-get-directions' ),
+						'loadError'     => __( 'The map could not load. Use the address and directions link above.', 'business-profile' ),
 					),
 				)
 			);
@@ -1022,7 +909,7 @@ if ( ! function_exists( 'bpwfwp_print_map' ) ) {
 			$bpfwp_map_ids = array();
 		}
 
-		$id = count( $bpfwp_map_ids );
+		$id              = count( $bpfwp_map_ids );
 		$bpfwp_map_ids[] = $id;
 
 		$attr = '';
@@ -1032,12 +919,13 @@ if ( ! function_exists( 'bpwfwp_print_map' ) ) {
 			$attr .= ' data-phone="' . esc_attr( $phone ) . '"';
 		}
 
-		if ( ! empty( $address['lat'] ) && ! empty( $address['lon'] ) ) {
+		if ( isset( $address['lat'], $address['lon'] ) && is_numeric( $address['lat'] ) && is_numeric( $address['lon'] ) && abs( (float) $address['lat'] ) <= 90 && abs( (float) $address['lon'] ) <= 180 ) {
 			$attr .= ' data-lat="' . esc_attr( $address['lat'] ) . '" data-lon="' . esc_attr( $address['lon'] ) . '"';
 		}
 		?>
 
-		<div id="bp-map-<?php echo esc_attr( $id ); ?>" class="bp-map" data-name="<?php echo esc_attr( bpfwp_setting( 'name', $location ) ); ?>" data-address="<?php echo esc_attr( $address['text'] ); ?>" <?php echo $attr; ?>></div>
+		<?php /* translators: %s: Business name. */ ?>
+		<div id="bp-map-<?php echo esc_attr( $id ); ?>" class="bp-map" role="region" aria-label="<?php echo esc_attr( sprintf( __( 'Map for %s', 'business-profile' ), bpfwp_setting( 'name', $location ) ) ); ?>" data-name="<?php echo esc_attr( bpfwp_setting( 'name', $location ) ); ?>" data-address="<?php echo esc_attr( $address['text'] ); ?>" <?php echo $attr; ?>></div>
 
 		<?php
 
@@ -1154,39 +1042,33 @@ if ( ! function_exists( 'bpfwp_json_ld_contact_print' ) ) {
 	 * @return void
 	 */
 	function bpfwp_json_ld_contact_print( $json_key, $json_data ) {
-
-		$return_string = '';
-
-		if ( is_array( $json_data ) )
-		{
-			$closing = '';
-			if ( bpfwp_array_any( array_keys( $json_data ), 'is_int' ) ) {
-				$return_string .= '"' . $json_key . '": [';
-				$closing = '],';
-			}
-			else {
-				$return_string .= empty( $json_key ) || is_int( $json_key ) ? '' : '"' . $json_key . '" : ';
-				
-				$return_string .= '{';
-				$closing = '},';
-			}
-
-			
-			foreach ( $json_data as $key => $data ) {
-				// recurse
-				$return_string .= bpfwp_json_ld_contact_print( $key, $data );
-			}
-
-			$return_string = trim( $return_string, ',' ) . $closing;
+		$data  = bpfwp_normalize_contact_json( $json_data, $json_key );
+		$flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+		$json  = wp_json_encode( $data, $flags );
+		if ( false === $json ) {
+			return '';
 		}
-		elseif ( $json_key == 'openingHours' ) {
-			$return_string .= '"' . $json_key . '": ' . $json_data . ',';
+		// Preserve the historical trailing-comma fragment contract used by theme templates.
+		if ( false !== $json_key && null !== $json_key && '' !== $json_key && ! is_int( $json_key ) ) {
+			$key  = 'type' === $json_key ? '@type' : $json_key;
+			$json = wp_json_encode( $key, $flags ) . ':' . $json;
 		}
-		else {
-			$return_string .= '"' . ( $json_key == 'type' ? '@' : '' ) . $json_key . '": "' . $json_data . '",';
-		}
+		return $json . ',';
+	}
+	function bpfwp_normalize_contact_json( $data, $key = null ) {
 
-		return $return_string;
+		if ( 'openingHours' === $key && is_string( $data ) ) {
+			$decoded = json_decode( $data, true );
+			return is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+		$result = array();
+		foreach ( $data as $child_key => $value ) {
+			$result[ 'type' === $child_key ? '@type' : $child_key ] = bpfwp_normalize_contact_json( $value, $child_key );
+		}
+		return $result;
 	}
 
 	function bpfwp_array_any(array $array, callable $fn) {

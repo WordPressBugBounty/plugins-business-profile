@@ -23,31 +23,25 @@ class bpfwpPermissions {
 		);
 	}
 
-	public function set_permissions() {
-		global $bpfwp_controller;
-
-		if ( is_array( get_option( 'bpfwp-permission-level' ) ) ) { return; }
-
-		if ( ! empty( get_option( 'bpfwp-permission-level' ) ) ) { 
-
-			update_option( 'bpfwp-permission-level', array( get_option( 'bpfwp-permission-level' ) ) );
-
-			return;
+		/** Normalize only the established Free/Premium levels; malformed data grants nothing. */
+		public static function normalize_level( $value ) {
+			if ( is_array( $value ) ) {
+				$value = count( $value ) === 1 ? reset( $value ) : null;
+			}
+			return in_array( $value, array( 2, '2' ), true ) ? 2 : 1;
 		}
 
-		$this->permission_level = 1;
+		public function set_permissions() {
+			$stored                 = get_option( 'bpfwp-permission-level' );
+			$this->permission_level = self::normalize_level( $stored );
+			if ( ! is_array( $stored ) ) {
+				update_option( 'bpfwp-permission-level', array( $this->permission_level ) );
+			}
+		}
 
-		update_option( 'bpfwp-permission-level', array( $this->permission_level ) );
-	}
-
-	public function get_permission_level() {
-
-		if ( ! is_array( get_option( 'bpfwp-permission-level' ) ) ) { $this->set_permissions(); }
-
-		$permissions_array = get_option( 'bpfwp-permission-level' );
-
-		$this->permission_level = is_array( $permissions_array ) ? reset( $permissions_array ) : $permissions_array;
-	}
+		public function get_permission_level() {
+			$this->set_permissions();
+		}
 
 	public function check_permission($permission_type = '') {
 		if ( ! $this->permission_level ) { $this->get_permission_level(); }
@@ -55,9 +49,9 @@ class bpfwpPermissions {
 		return ( array_key_exists( $permission_type, $this->plugin_permissions ) ? ( $this->permission_level >= $this->plugin_permissions[$permission_type] ? true : false ) : false );
 	}
 
-	public function update_permissions() {
-		$this->permission_level = get_option( "bpfwp-permission-level" );
-	}
+		public function update_permissions() {
+			$this->get_permission_level();
+		}
 }
 
 }

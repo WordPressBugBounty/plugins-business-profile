@@ -118,10 +118,11 @@ $json_ld_data = array( 'type' => bpfwp_setting( 'schema-type', bpfwp_get_display
         }
     } 
     ?>
-    <script type="application/ld+json">
-        <?php
-            $json_ld_data["@context"] = "https://schema.org/";
-            echo trim( bpfwp_json_ld_contact_print( false, $json_ld_data ), ',' );
-        ?>
-    </script>
+	<?php
+	$location     = (int) bpfwp_get_display( 'location' );
+	$owned        = array( '@type', 'name', 'url', 'description', 'telephone', 'email', 'address', 'geo', 'image', 'openingHours', 'openingHoursSpecification', 'specialOpeningHoursSpecification' );
+	$json_ld_data = array_replace( array_diff_key( $json_ld_data, array_flip( $owned ) ), bpfwpBusinessData::entity( $location ) );
+	unset( $json_ld_data['type'] );
+	bpfwpBusinessData::queue_entity( $json_ld_data, $location );
+	?>
 </address>

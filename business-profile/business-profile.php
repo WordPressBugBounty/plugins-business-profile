@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Five Star Business Profile and Schema
  * Plugin URI:  https://www.fivestarplugins.com/plugins/business-profile/
- * Description: Add schema structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Map, opening hours and more.
- * Version:     2.3.21
+ * Description: Add structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Maps, opening hours and more.
+ * Version:     2.4.0
  * Author:      Five Star Plugins
  * Author URI:  https://www.fivestarplugins.com
  * License: GPLv3
@@ -107,7 +107,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			define( 'BPFWP_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_FNAME', plugin_basename( __FILE__ ) );
-			define( 'BPFWP_VERSION', '2.3.21' );
+			define( 'BPFWP_VERSION', '2.4.0' );
 		}
 
 		/**
@@ -134,6 +134,15 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-review-ask.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-schemas-manager.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/schemas/class-schema.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-location-publication.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-business-data.php';
+			add_action( 'wp_footer', array( 'bpfwpBusinessData', 'output_entities' ), 100 );
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-settings-mutation.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-publication-checks.php';
+			bpfwpPublicationChecks::init();
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-admin-selector.php';
+			bpfwpAdminSelector::init();
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-settings.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-template-loader.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/template-functions.php';
@@ -148,7 +157,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 		 * @return void
 		 */
 		protected function instantiate() {
-			
+
 			new bpfwpCompatibility();
 			new bpfwpAdminCustomFields();
 			new bpfwpIntegrations(); // Deprecated in v1.1.
@@ -156,18 +165,22 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			new bpfwpDashboard();
 			new bpfwpReviewAsk();
 			new bpfwpInstallationWalkthrough();
-			
+
 			$this->permissions = new bpfwpPermissions();
-			$this->schemas = new bpfwpSchemasManager();
+			$this->schemas     = new bpfwpSchemasManager();
+			bpfwpSettingsMutation::init();
 			$this->settings = new bpfwpSettings();
+			add_filter( 'bpfwp_schema_source_registry', array( 'bpfwpBusinessData', 'register_sources' ) );
 			$this->cpts = new bpfwpCustomPostTypes();
+			new bpfwpLocationPublication();
 
 			$this->blocks = new bpfwpBlocks();
-			if ( function_exists( 'register_block_pattern' ) ) { $this->patterns = new bpfwpPatterns(); }
+			if ( function_exists( 'register_block_pattern' ) ) {
+				$this->patterns = new bpfwpPatterns();
+			}
 
-	
 			$this->blocks->run();
-			$this->cpts->run( $this->settings->get_setting('multiple-locations') );
+			$this->cpts->run( $this->settings->get_setting( 'multiple-locations' ) );
 
 			new bpfwpAboutUs();
 		}
@@ -416,15 +429,15 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 		 */
 		function append_to_content( $content ) {
 			global $post;
-	
-			if ( !is_main_query() || !in_the_loop() || post_password_required() ) {
+
+			if ( ! is_main_query() || ! in_the_loop() || post_password_required() ) {
 				return $content;
 			}
-	
-			if ( $post->ID == $this->settings->get_setting( 'contact-page' ) and ! $this->settings->get_setting( 'disable-contact-page-card' ) ) {
+
+			if ( $post->ID == $this->settings->get_setting( 'contact-page' ) && ! $this->settings->get_setting( 'disable-contact-page-card' ) && ! has_shortcode( $post->post_content, 'contact-card' ) && ! has_block( 'business-profile/contact-card', $post ) ) {
 				return $content . bpwfwp_print_contact_card();
 			}
-	
+
 			return $content;
 		}
 

@@ -94,7 +94,11 @@ if ( ! class_exists( 'bpfwpContactCardWidget', false ) ) :
 
 			<p>
 				<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"> <?php _e( 'Title' ); ?></label>
-				<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text"<?php if ( isset( $instance['title'] ) ) : ?> value="<?php echo esc_attr( $instance['title'] ); ?>"<?php endif; ?>>
+				<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text"
+				<?php
+				if ( isset( $instance['title'] ) ) :
+					?>
+					value="<?php echo esc_attr( $instance['title'] ); ?>"<?php endif; ?>>
 			</p>
 
 			<?php
@@ -102,13 +106,17 @@ if ( ! class_exists( 'bpfwpContactCardWidget', false ) ) :
 
 				// Get an array of all locations with sane limits.
 				$locations = array();
-				$query = new WP_Query( array(
-					'post_type'              => array( $bpfwp_controller->cpts->location_cpt_slug ),
-					'no_found_rows'          => true,
-					'update_post_meta_cache' => false,
-					'update_post_term_cache' => false,
-					'posts_per_page'         => 500,
-				) );
+				$query     = new WP_Query(
+					array(
+						'post_type'              => array( $bpfwp_controller->cpts->location_cpt_slug ),
+						'post_status'            => 'publish',
+						'meta_query'             => bpfwpLocationPublication::public_meta_query(),
+						'no_found_rows'          => true,
+						'update_post_meta_cache' => false,
+						'update_post_term_cache' => false,
+						'posts_per_page'         => 50,
+					)
+				);
 				if ( $query->have_posts() ) {
 					while ( $query->have_posts() ) {
 						$query->next_post();
@@ -116,14 +124,21 @@ if ( ! class_exists( 'bpfwpContactCardWidget', false ) ) :
 					}
 				}
 				wp_reset_postdata();
+				if ( ! empty( $instance['location'] ) && bpfwpLocationPublication::eligible( $instance['location'] ) ) {
+					$locations[ (int) $instance['location'] ] = get_the_title( $instance['location'] );
+				}
 				?>
 
 				<p>
 					<label for="<?php echo esc_attr( $this->get_field_id( 'location' ) ); ?>"> <?php _e( 'Location' ); ?></label>
-					<select name="<?php echo esc_attr( $this->get_field_name( 'location' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'location' ) ); ?>" class="widefat">
+					<select name="<?php echo esc_attr( $this->get_field_name( 'location' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'location' ) ); ?>" class="widefat bpfwp-public-search" data-kind="location">
 						<option><?php esc_html_e( 'Use Primary Business Profile' ); ?></option>
 						<?php foreach ( $locations as $id => $title ) : ?>
-							<option value="<?php echo absint( $id ); ?>"<?php if ( isset( $instance['location'] ) && $instance['location'] === $id ) : ?> selected<?php endif; ?>>
+							<option value="<?php echo absint( $id ); ?>"
+							<?php
+							if ( isset( $instance['location'] ) && $instance['location'] === $id ) :
+								?>
+								selected<?php endif; ?>>
 								<?php esc_attr_e( $title ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -132,14 +147,19 @@ if ( ! class_exists( 'bpfwpContactCardWidget', false ) ) :
 
 			<?php endif; // Locations. ?>
 
-			<?php print_r($this->toggles, true); foreach ( $this->toggles as $id => $label ) : ?>
+			<?php print_r( $this->toggles, true ); foreach ( $this->toggles as $id => $label ) : ?>
 
 			<p>
-				<input type="checkbox" id="<?php echo esc_attr( $this->get_field_id( $id ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $id ) ); ?>" value="1"<?php if ( ! empty( $instance[ $id ] ) ) : ?> checked="checked"<?php endif; ?>>
+				<input type="checkbox" id="<?php echo esc_attr( $this->get_field_id( $id ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $id ) ); ?>" value="1"
+				<?php
+				if ( ! empty( $instance[ $id ] ) ) :
+					?>
+					checked="checked"<?php endif; ?>>
 				<label for="<?php echo esc_attr( $this->get_field_id( $id ) ); ?>"> <?php echo esc_html( $label ); ?></label>
 			</p>
 
-			<?php endforeach;
+				<?php
+			endforeach;
 		}
 
 		/**

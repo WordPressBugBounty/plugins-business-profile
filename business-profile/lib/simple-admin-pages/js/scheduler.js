@@ -364,27 +364,22 @@ jQuery(document).ready(function ($) {
 		 * Register a new timepicker on an element
 		 */
 		function sap_scheduler_register_timepicker( el ) {
-			
+			// Give the picker its canonical submission format before parsing legacy 24-hour values.
+			el.each(function () {
+				var parts = this.value.trim().match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)?$/i);
+				if (!parts) return;
+				var hour = Number(parts[1]);
+				if (parts[3] && hour >= 1 && hour <= 12) hour = hour % 12 + (parts[3].toUpperCase() === 'PM' ? 12 : 0);
+				if (hour < 24) this.setAttribute('data-value', (hour % 12 || 12) + ':' + parts[2] + (hour >= 12 ? ' PM' : ' AM'));
+			});
 			el.pickatime({
 				interval: obj.time_interval,
 				format: obj.time_format,
 				formatSubmit: 'h:i A',
-				hiddenName: true,
-
-				// Select the value when loaded if a value has been set
-				onStart: function() {
-					if ( this.get() !== '' ) {
-						var today = new Date();
-						var today_date = today.getFullYear() + '/' + ( today.getMonth() + 1 ) + '/' + today.getDate();
-						var time = new Date( today_date + ' ' + this.get() );
-						if ( Object.prototype.toString.call( time ) === "[object Date]" ) {
-							this.set( 'select', time );
-						}
-					}
-				}
+				hiddenName: true
 			});
 		}
-			
+
 
 		/**
 		 * Register click events on load

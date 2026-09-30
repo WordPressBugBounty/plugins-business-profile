@@ -56,17 +56,18 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @access public
 		 * @return void
 		 */
-		public function run( $run_locations = false) {
+		public function run( $run_locations = false ) {
 			$this->run_locations = $run_locations;
 
-			add_action( 'init',                  array( $this, 'load_cpts' ) );
-			add_action( 'add_meta_boxes',        array( $this, 'add_meta_boxes' ) );
+			add_action( 'init', array( $this, 'load_cpts' ) );
+			add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+			add_action( 'add_meta_boxes', array( $this, 'add_field_modes_box' ) );
 			add_action( 'edit_form_after_title', array( $this, 'add_meta_nonce' ) );
-			add_action( 'current_screen',        array( $this, 'maybe_flush_rewrite_rules' ) );
-			add_action( 'the_content',           array( $this, 'append_to_content' ) );
+			add_action( 'current_screen', array( $this, 'maybe_flush_rewrite_rules' ) );
+			add_action( 'the_content', array( $this, 'append_to_content' ) );
 
-			add_action( 'save_post_' . $this->location_cpt_slug,	array( $this, 'save_location_meta' ) );
-			add_action( 'save_post_' . $this->schema_cpt_slug,		array( $this, 'save_schema_meta' ) );
+			add_action( 'save_post_' . $this->location_cpt_slug, array( $this, 'save_location_meta' ) );
+			add_action( 'save_post_' . $this->schema_cpt_slug, array( $this, 'save_schema_meta' ) );
 
 			add_action( 'wp_ajax_bpfwp_get_schema_fields', array( $this, 'get_schema_fields' ) );
 		}
@@ -527,7 +528,12 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @param  WP_Post $post The current post object.
 		 * @return void
 		 */
+		public function add_field_modes_box() {
+			add_meta_box( 'bpfwp-field-modes', __( 'Business information sources', 'business-profile' ), array( 'bpfwpBusinessData', 'render_modes' ), $this->location_cpt_slug, 'normal' );
+		}
+
 		public function print_opening_hours_metabox( $post ) {
+			echo '<input type="hidden" name="bpfwp-present-fields[]" value="opening_hours">';
 
 			$scheduler = $this->get_scheduler_meta_object( get_post_meta( $post->ID, 'opening_hours', true ) );
 
@@ -558,6 +564,8 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return void
 		 */
 		public function print_exceptions_metabox( $post ) {
+			echo '<input type="hidden" name="bpfwp-present-fields[]" value="exceptions">';
+			echo '<input type="hidden" name="disable_main_exceptions" value="0">';
 
 			$exceptions = $this->get_exceptions_meta_object( get_post_meta( $post->ID, 'exceptions', true ) );
 
@@ -586,6 +594,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return void
 		 */
 		public function print_custom_fields_metabox( $post ) {
+			echo '<input type="hidden" name="bpfwp-custom-fields-present" value="1">';
 			global $bpfwp_controller;
 
 			$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
@@ -627,7 +636,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 								</select>
 		
 							<?php } ?>
-						<?php } elseif ( $custom_field->type == 'checkbox' ) { ?>
+						<?php } elseif ( 'checkbox' === $custom_field->type ) { ?>
 							<?php $field_value = is_array( $field_value ) ? $field_value : array(); ?>
 							<?php if ( ! empty( $options ) ) { ?>
 		
@@ -669,7 +678,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 							<div class='bpfwp-fields-page-file-preview'>
 	
 								<span>
-									<?php _e( 'Current File:',  'business-profile' ); ?> <?php echo ! empty( $field_value ) ? esc_html( basename( $field_value ) ) : ''; ?>
+									<?php _e( 'Current File:', 'business-profile' ); ?> <?php echo ! empty( $field_value ) ? esc_html( basename( $field_value ) ) : ''; ?>
 								</span>
 	
 							</div>
@@ -701,21 +710,33 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return void
 		 */
 		public function print_schema_details_metabox( $post ) {
+			$rule_id = $post->ID;
 			global $bpfwp_controller;
 
-			$post_is_set = isset($bpfwp_controller->schemas->schema_cpts[$post->ID]);
+			$post_is_set = isset( $bpfwp_controller->schemas->schema_cpts[ $post->ID ] );
 
-			$post_types = get_post_types( array( 'public' => true ), 'objects' );
-			$posts = get_posts( array( 'numberposts' => 1000 ) );
-			$pages = get_pages();
+			$post_types      = get_post_types( array( 'public' => true ), 'objects' );
+			$posts           = get_posts(
+				array(
+					'numberposts' => 50,
+					'post_status' => 'publish',
+				)
+			);
+			$pages           = get_posts(
+				array(
+					'numberposts' => 50,
+					'post_type'   => 'page',
+					'post_status' => 'publish',
+				)
+			);
 			$post_categories = get_categories();
-			$taxonomies = get_taxonomies( array(), 'objects' );
-			$page_templates = get_page_templates();
+			$taxonomies      = get_taxonomies( array(), 'objects' );
+			$page_templates  = get_page_templates();
 
 			$organization_schema_types = $bpfwp_controller->schemas->get_schema_organization_types();
 			$rich_results_schema_types = $bpfwp_controller->schemas->get_schema_rich_results_types();
-			
-			$schema_fields = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->schema_class->fields : array();
+
+			$schema_fields = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->schema_class->fields : array();
 
 			// Add in the schema selector script and pass post_type, post, page, etc. data to javascript
 			wp_enqueue_script( 'bpfwp-admin-schema-selector', BPFWP_PLUGIN_URL . '/assets/js/admin-schema-selector.js', array( 'jquery' ), BPFWP_VERSION );
@@ -723,20 +744,20 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 				'bpfwp-admin-schema-selector',
 				'schema_option_data',
 				array(
-					'post_types' => $post_types,
-					'posts' => $posts,
-					'pages' => $pages,
+					'post_types'      => $post_types,
+					'posts'           => $posts,
+					'pages'           => $pages,
 					'post_categories' => $post_categories,
-					'taxonomies' => $taxonomies,
-					'page_templates' => $page_templates 
+					'taxonomies'      => $taxonomies,
+					'page_templates'  => $page_templates,
 				)
 			);
 
-			$selected_target_type = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->target_type : '';
-			$selected_target_value = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->target_value : '';
-			$selected_schema = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->schema_type : '';
-			$field_defaults = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->field_defaults : array();
-			$default_display = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[$post->ID]->default_display : false;
+			$selected_target_type  = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->target_type : '';
+			$selected_target_value = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->target_value : '';
+			$selected_schema       = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->schema_type : '';
+			$field_defaults        = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->field_defaults : array();
+			$default_display       = $post_is_set ? $bpfwp_controller->schemas->schema_cpts[ $post->ID ]->default_display : false;
 
 			$this->field_id = 0;
 
@@ -747,32 +768,86 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 					<?php esc_html_e( 'Specify Target', 'business-profile' ); ?>
 				</label>
 				<select name="schema_target_type" class="no-margin">
-					<option value='post_type' <?php if ( $selected_target_type == 'post_type' ) : ?> selected<?php endif; ?>><?php _e( 'Post Type', 'business-profile' ); ?></option>
-					<option value='post' <?php if ( $selected_target_type == 'post' ) : ?> selected<?php endif; ?>><?php _e( 'Post', 'business-profile' ); ?></option>
-					<option value='page' <?php if ( $selected_target_type == 'page' ) : ?> selected<?php endif; ?>><?php _e( 'Page', 'business-profile' ); ?></option>
+					<?php if ( $selected_target_type && ! in_array( $selected_target_type, array( 'post_type', 'post', 'page', 'global' ), true ) ) : ?>
+						<option value="<?php echo esc_attr( $selected_target_type ); ?>" selected><?php esc_html_e( 'Unsupported legacy target (retained; no output)', 'business-profile' ); ?></option>
+					<?php endif; ?>
+					<option value='post_type'
+					<?php
+					if ( 'post_type' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Post Type', 'business-profile' ); ?></option>
+					<option value='post'
+					<?php
+					if ( 'post' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Post', 'business-profile' ); ?></option>
+					<option value='page'
+					<?php
+					if ( 'page' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Page', 'business-profile' ); ?></option>
 					<?php // @to-do: add in the three target types below ?>
-					<!-- <option value='post_category' <?php if ( $selected_target_type == 'post_category' ) : ?> selected<?php endif; ?>><?php _e( 'Post Category', 'business-profile' ); ?></option>
-					<option value='taxonomy' <?php if ( $selected_target_type == 'taxonomy' ) : ?> selected<?php endif; ?>><?php _e( 'Taxonomy', 'business-profile' ); ?></option>
-					<option value='page_template' <?php if ( $selected_target_type == 'page_template' ) : ?> selected<?php endif; ?>><?php _e( 'Page Template', 'business-profile' ); ?></option> -->
-					<option value='global' <?php if ( $selected_target_type == 'global' ) : ?> selected<?php endif; ?>><?php _e( 'Global', 'business-profile' ); ?></option>
+					<!-- <option value='post_category'
+					<?php
+					if ( 'post_category' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Post Category', 'business-profile' ); ?></option>
+					<option value='taxonomy'
+					<?php
+					if ( 'taxonomy' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Taxonomy', 'business-profile' ); ?></option>
+					<option value='page_template'
+					<?php
+					if ( 'page_template' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Page Template', 'business-profile' ); ?></option> -->
+					<option value='global'
+					<?php
+					if ( 'global' === $selected_target_type ) :
+						?>
+						selected<?php endif; ?>><?php _e( 'Global', 'business-profile' ); ?></option>
 				</select>
-				<select name="schema_target_value" class="no-margin">
-					<?php 
-					if ( $selected_target_type == 'post_type' or ! $selected_target_type ) {
-						foreach ( $post_types as $post_type ) { ?>
-							<option value='<?php echo esc_attr( $post_type->name ); ?>'<?php if ( $selected_target_value == $post_type->name ) : ?> selected<?php endif; ?>><?php echo esc_html( $post_type->label ); ?></option>
-					<?php }
+				<select name="schema_target_value" class="no-margin bpfwp-public-search">
+					<?php if ( $selected_target_type && ! in_array( $selected_target_type, array( 'post_type', 'post', 'page', 'global' ), true ) ) : ?>
+						<option value="<?php echo esc_attr( $selected_target_value ); ?>" selected><?php echo esc_html( $selected_target_value ); ?></option>
+					<?php endif; ?>
+					<?php if ( in_array( $selected_target_type, array( 'post', 'page' ), true ) && $selected_target_value && get_post_type( $selected_target_value ) === $selected_target_type ) : ?>
+						<option value="<?php echo absint( $selected_target_value ); ?>" selected><?php echo esc_html( get_the_title( $selected_target_value ) ); ?></option>
+					<?php endif; ?>
+					<?php
+					if ( 'post_type' === $selected_target_type or ! $selected_target_type ) {
+						foreach ( $post_types as $post_type ) {
+							?>
+							<option value='<?php echo esc_attr( $post_type->name ); ?>'
+							<?php
+							if ( $selected_target_value == $post_type->name ) :
+								?>
+								selected<?php endif; ?>><?php echo esc_html( $post_type->label ); ?></option>
+							<?php
+						}
+					} elseif ( 'post' === $selected_target_type ) {
+						foreach ( $posts as $post ) {
+							?>
+							<option value='<?php echo esc_attr( $post->ID ); ?>'
+							<?php
+							if ( $selected_target_value == $post->ID ) :
+								?>
+								selected<?php endif; ?>><?php echo esc_html( $post->post_title ); ?></option>
+							<?php
+						}
+					} elseif ( 'page' === $selected_target_type ) {
+						foreach ( $pages as $page ) {
+							?>
+							<option value='<?php echo esc_attr( $page->ID ); ?>'
+							<?php
+							if ( $selected_target_value == $page->ID ) :
+								?>
+								selected<?php endif; ?>><?php echo esc_html( $page->post_title ); ?></option>
+							<?php
+						}
 					}
-					elseif ( $selected_target_type == 'post' ) {
-						foreach ( $posts as $post ) { ?>
-							<option value='<?php echo esc_attr( $post->ID ); ?>'<?php if ( $selected_target_value == $post->ID ) : ?> selected<?php endif; ?>><?php echo esc_html( $post->post_title ); ?></option>
-					<?php }
-					}
-					elseif ( $selected_target_type == 'page' ) {
-						foreach ( $pages as $page ) { ?>
-							<option value='<?php echo esc_attr( $page->ID ); ?>'<?php if ( $selected_target_value == $page->ID ) : ?> selected<?php endif; ?>><?php echo esc_html( $page->post_title ); ?></option>
-					<?php }
-					} ?>
+					?>
 				</select>
 			</div>
 
@@ -784,14 +859,22 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 					<option></option>
 					<optgroup label="Organization Types">
 						<?php foreach ( $organization_schema_types as $schema_slug => $schema_name ) : ?>
-							<option value="<?php echo esc_attr( $schema_slug ); ?>"<?php if ( $selected_schema == $schema_slug ) : ?> selected<?php endif; ?>>
+							<option value="<?php echo esc_attr( $schema_slug ); ?>"
+							<?php
+							if ( $selected_schema == $schema_slug ) :
+								?>
+								selected<?php endif; ?>>
 								<?php esc_attr_e( $schema_name ); ?>
 							</option>
 						<?php endforeach; ?>
 					</optgroup>
 					<optgroup label="Rich Results Types">
 						<?php foreach ( $rich_results_schema_types as $schema_slug => $schema_name ) : ?>
-							<option value="<?php echo esc_attr( $schema_slug ); ?>"<?php if ( $selected_schema == $schema_slug ) : ?> selected<?php endif; ?>>
+							<option value="<?php echo esc_attr( $schema_slug ); ?>"
+							<?php
+							if ( $selected_schema == $schema_slug ) :
+								?>
+								selected<?php endif; ?>>
 								<?php esc_attr_e( $schema_name ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -819,10 +902,18 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 			</div>
 
 			<div class="bpfwp-meta-input bpfwp-default_display">
+				<?php if ( metadata_exists( 'post', $rule_id, 'bpfwp-schema-data' ) && ! get_post_meta( $rule_id, 'bpfwp-rule-contract-version', true ) ) : ?>
+					<p><?php esc_html_e( 'Legacy publication behavior: this rule currently emits for eligible matches even when the display checkbox is off. Confirm below to make that checkbox control default output. Page-level Include and Exclude choices take priority.', 'business-profile' ); ?></p>
+					<label><input type="checkbox" name="bpfwp-confirm-rule-contract" value="1"> <?php esc_html_e( 'Use the 2.4 publication policy for this rule', 'business-profile' ); ?></label>
+				<?php endif; ?>
 				<label for="default_display">
 					<?php esc_html_e( 'Display For All Matching Items', 'business-profile' ); ?>
 				</label>
-				<input type="checkbox" name="default_display" <?php if ( $default_display ) : ?> checked<?php endif; ?>>
+				<input type="checkbox" name="default_display"
+				<?php
+				if ( $default_display ) :
+					?>
+					checked<?php endif; ?>>
 			</div>
 
 			<?php
@@ -839,23 +930,31 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 */
 		public function get_callback_input( $field, $field_defaults, $field_prefix = '' ) {
 			global $bpfwp_controller;
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-source-policy.php';
 
 			if ( $field->input == 'SchemaField' ) {
 				echo '<label for="field_defaults" class="bold-label">' . esc_html( $field->name ) . '</label>';
 				echo '<div class="bpfwp-clear"></div>';
 				echo '<div>';
 				$field_prefix .= '_' . $field->slug;
-				foreach ( $field->children as $child_field ) { $this->get_callback_input( $child_field, $field_defaults, $field_prefix ); }
+				foreach ( $field->children as $child_field ) {
+					$this->get_callback_input( $child_field, $field_defaults, $field_prefix );
+				}
 				echo '</div>';
-			}
-			else {
+			} else {
+				$expression = isset( $field_defaults[ $field_prefix . '_' . $field->slug ] ) ? $field_defaults[ $field_prefix . '_' . $field->slug ] : $field->callback;
+				if ( bpfwpSchemaSourcePolicy::is_expression( $expression ) && ! bpfwpSchemaSourcePolicy::is_registered( $expression ) ) {
+					echo '<p class="description">' . esc_html__( 'This field uses an unregistered source. Its value is not read or published. Select a public source or an intentional literal value; the existing configuration is retained until you save.', 'business-profile' ) . '</p>';
+				}
 				echo '<label for="field_defaults">' . esc_html( $field->name ) . '</label>';
 				//echo '<div class="bpfwp-clear"></div>';
-				echo '<input type="text" class="bpfwp-schema-defaults-field" name="field_defaults[' . esc_attr( $field_prefix ) . '_' . esc_attr( $field->slug ) .']" value="' . ( isset($field_defaults[$field_prefix . '_' . $field->slug]) ? esc_attr( $field_defaults[$field_prefix . '_' . $field->slug] ) : "" ) . '" placeholder="' . esc_attr( $field->callback ) . '" data-field_id="' . esc_attr( $this->field_id ) . '">';
-				if ( $bpfwp_controller->settings->get_setting( 'schema-default-helpers' ) ) { echo '<span class="bpfwp-schema-defaults-helper dashicons dashicons-arrow-down-alt2" data-field_id="' . esc_attr( $this->field_id ) . '"></span>'; }
+				echo '<input type="text" class="bpfwp-schema-defaults-field" name="field_defaults[' . esc_attr( $field_prefix ) . '_' . esc_attr( $field->slug ) . ']" value="' . ( isset( $field_defaults[ $field_prefix . '_' . $field->slug ] ) ? esc_attr( $field_defaults[ $field_prefix . '_' . $field->slug ] ) : '' ) . '" placeholder="' . esc_attr( $field->callback ) . '" data-field_id="' . esc_attr( $this->field_id ) . '">';
+				if ( $bpfwp_controller->settings->get_setting( 'schema-default-helpers' ) ) {
+					echo '<span class="bpfwp-schema-defaults-helper dashicons dashicons-arrow-down-alt2" data-field_id="' . esc_attr( $this->field_id ) . '"></span>';
+				}
 				echo '<div class="bpfwp-clear"></div>';
 
-				$this->field_id++;
+				++$this->field_id;
 			}
 		}
 
@@ -1000,7 +1099,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 			if ( ! isset( $_POST['bpfwp_location_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_location_meta_nonce'] ), 'bpfwp_location_meta' ) ) { // Input var okay.
 				return $post_id;
-			} 
+			}
 
 			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 				return $post_id;
@@ -1010,34 +1109,52 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 				return $post_id;
 			}
 
+			if ( get_post_type( $post_id ) !== $this->location_cpt_slug || wp_is_post_revision( $post_id ) ) {
+				return $post_id;
+			}
+			if ( isset( $_POST['bpfwp-field-modes'] ) ) {
+				bpfwpBusinessData::save_modes( $post_id, wp_unslash( $_POST['bpfwp-field-modes'] ) );
+			}
+
 			$post_meta = array(
-				'schema_type'   			=> 'sanitize_text_field',
-				'geo_address'   			=> 'wp_kses_post',
-				'geo_latitude'  			=> 'sanitize_text_field',
-				'geo_longitude' 			=> 'sanitize_text_field',
-				'phone'         			=> 'sanitize_text_field',
-				'clickphone'				=> 'sanitize_text_field',
-				'cell-phone'        		=> 'sanitize_text_field',
-				'clickcellphone'    		=> 'sanitize_text_field',
-				'whatsapp'          		=> 'sanitize_text_field',
-				'whatsappdisplay'   		=> 'sanitize_text_field',
-				'whatsapptext'      		=> 'sanitize_text_field',
-				'fax'               		=> 'sanitize_text_field',
-				'contact_post'  			=> 'absint',
-				'contact_email' 			=> 'sanitize_email',
-				'ordering-link'				=> 'esc_url_raw',
-				'opening_hours' 			=> array( $this, 'sanitize_opening_hours' ),
-				'exceptions' 				=> array( $this, 'sanitize_exceptions' ),
-				'disable_main_exceptions'	=> 'absint',
+				'schema_type'             => 'sanitize_text_field',
+				'geo_address'             => 'wp_kses_post',
+				'geo_latitude'            => 'sanitize_text_field',
+				'geo_longitude'           => 'sanitize_text_field',
+				'phone'                   => 'sanitize_text_field',
+				'clickphone'              => 'sanitize_text_field',
+				'cell-phone'              => 'sanitize_text_field',
+				'clickcellphone'          => 'sanitize_text_field',
+				'whatsapp'                => 'sanitize_text_field',
+				'whatsappdisplay'         => 'sanitize_text_field',
+				'whatsapptext'            => 'sanitize_text_field',
+				'fax'                     => 'sanitize_text_field',
+				'contact_post'            => 'absint',
+				'contact_email'           => 'sanitize_email',
+				'ordering-link'           => 'esc_url_raw',
+				'opening_hours'           => array( $this, 'sanitize_opening_hours' ),
+				'exceptions'              => array( $this, 'sanitize_exceptions' ),
+				'disable_main_exceptions' => 'absint',
 			);
 
 			foreach ( $post_meta as $key => $sanitizer ) {
 
-				if ( ! isset( $_POST[ $key ] ) ) { // Input var okay.
-					$_POST[ $key ] = '';
+				if ( ! isset( $_POST[ $key ] ) ) {
+					$present = isset( $_POST['bpfwp-present-fields'] ) && is_array( $_POST['bpfwp-present-fields'] ) ? $_POST['bpfwp-present-fields'] : array();
+					if ( ! in_array( $key, array( 'opening_hours', 'exceptions' ), true ) || ! in_array( $key, $present, true ) ) {
+						continue;
+					}
+					$_POST[ $key ] = array();
 				}
 
 				$cur = get_post_meta( $post_id, $key, true );
+				if ( in_array( $key, array( 'opening_hours', 'exceptions' ), true ) ) {
+					$check = bpfwpSettingsMutation::validate_schedule( array( 'opening_hours' === $key ? 'opening-hours' : 'exceptions' => wp_unslash( $_POST[ $key ] ) ) );
+					if ( is_wp_error( $check ) ) {
+						set_transient( 'bpfwp_schema_error_' . get_current_user_id(), $check->get_error_message(), 60 );
+						continue;
+					}
+				}
 				$new = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) ); // Input var okay.
 
 				if ( $new !== $cur ) {
@@ -1047,36 +1164,40 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 			$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
 
-			$custom_field_values = array();
+			$custom_field_values = get_post_meta( $post_id, 'custom_field_values', true );
+			$custom_field_values = is_array( $custom_field_values ) ? $custom_field_values : array();
 
-			foreach ( $custom_fields as $custom_field ) { 
-				
+			foreach ( $custom_fields as $custom_field ) {
+
 				$input_name = 'bpfwp-custom-field-' . $custom_field->id;
-	
+				if ( ! isset( $_POST[ $input_name ] ) && empty( $_FILES[ $input_name ]['name'] ) ) {
+					if ( 'checkbox' !== $custom_field->type || empty( $_POST['bpfwp-custom-fields-present'] ) ) {
+						continue;
+					}
+					$_POST[ $input_name ] = array();
+				}
+
 				if ( $custom_field->type == 'file' ) {
-	
+
 					if ( empty( $_FILES[ $input_name ]['name'] ) ) {
 
-						$field_value = sanitize_text_field( $_POST[ $input_name ] ); 
-					}
-					else {
-				
+						$field_value = sanitize_text_field( $_POST[ $input_name ] );
+					} else {
+
 						$uploaded_file = wp_handle_upload( $_FILES[ $input_name ], array( 'test_form' => false ) );
-						$field_value = $uploaded_file['url'];
+						$field_value   = $uploaded_file['url'];
 					}
-				}
-				elseif ( $custom_field->type == 'checkbox' ) {
-	
+				} elseif ( 'checkbox' === $custom_field->type ) {
+
 					$field_value = ( isset( $_POST[ $input_name ] ) and is_array( $_POST[ $input_name ] ) ) ? array_map( 'sanitize_text_field', $_POST[ $input_name ] ) : array();
-				}
-				else {
-					
+				} else {
+
 					$field_value = sanitize_text_field( $_POST[ $input_name ] );
 				}
 
 				$custom_field_values[ $custom_field->id ] = $field_value;
 			}
-			
+
 			update_post_meta( $post_id, 'custom_field_values', $custom_field_values );
 
 			return $post_id;
@@ -1092,10 +1213,12 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return int $post_id The current post ID.
 		 */
 		public function save_schema_meta( $post_id ) {
+			if ( get_post_type( $post_id ) !== $this->schema_cpt_slug || wp_is_post_revision( $post_id ) ) {
+				return $post_id;
+			}
 			if ( ! isset( $_POST['bpfwp_schema_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_schema_meta_nonce'] ), 'bpfwp_schema_meta' ) ) { // Input var okay.
 				return $post_id;
 			}
-
 
 			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 				return $post_id;
@@ -1105,12 +1228,17 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 				return $post_id;
 			}
 
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-source-policy.php';
+			if ( ! isset( $_POST['schema_type'] ) || ! bpfwpSchemaSourcePolicy::schema_file( wp_unslash( $_POST['schema_type'] ) ) ) {
+				return $post_id;
+			}
+
 			$post_meta = array(
-				'schema_target_type'   	=> 'sanitize_text_field',
-				'schema_target_value'   => 'sanitize_text_field',
-				'schema_type'  			=> 'sanitize_text_field',
-				'field_defaults' 		=> 'sanitize_text_field',
-				'default_display'		=> 'sanitize_text_field'
+				'schema_target_type'  => 'sanitize_text_field',
+				'schema_target_value' => 'sanitize_text_field',
+				'schema_type'         => 'sanitize_text_field',
+				'field_defaults'      => 'sanitize_text_field',
+				'default_display'     => 'sanitize_text_field',
 			);
 
 			$post_meta_array = array();
@@ -1120,13 +1248,33 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 					$_POST[ $key ] = '';
 				}
 
-				if ( is_array($_POST[ $key ]) ) { $value = array_map( $sanitizer, $_POST[ $key ] ); }
-				else { $value = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) ); } // Input var okay.
+				if ( is_array( $_POST[ $key ] ) ) {
+					$value = array_map( $sanitizer, wp_unslash( $_POST[ $key ] ) );
+				} else {
+					$value = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) ); } // Input var okay.
 
-				$post_meta_array[$key] = $value;
+				$post_meta_array[ $key ] = $value;
 			}
 
-			update_post_meta( $post_id, 'bpfwp-schema-data', $post_meta_array );
+			$previous     = get_post_meta( $post_id, 'bpfwp-schema-data', true );
+			$target       = $post_meta_array['schema_target_type'];
+			$value        = $post_meta_array['schema_target_value'];
+			$valid_target = is_string( $target ) && is_string( $value ) && (
+				'global' === $target ||
+				( 'post_type' === $target && in_array( $value, get_post_types( array( 'public' => true ) ), true ) ) ||
+				( in_array( $target, array( 'post', 'page' ), true ) && get_post_type( absint( $value ) ) === $target )
+			);
+			// Retain an unsupported legacy target exactly until the editor selects a supported replacement.
+			$unchanged_legacy = is_array( $previous ) && ( $previous['schema_target_type'] ?? null ) === $target && ( $previous['schema_target_value'] ?? null ) === $value;
+			if ( ! $valid_target && ! $unchanged_legacy ) {
+				set_transient( 'bpfwp_schema_error_' . get_current_user_id(), __( 'Choose a supported schema target.', 'business-profile' ), 60 );
+				return $post_id;
+			}
+			$is_new = ! metadata_exists( 'post', $post_id, 'bpfwp-schema-data' );
+			update_post_meta( $post_id, 'bpfwp-schema-data', wp_slash( $post_meta_array ) );
+			if ( $is_new || ( isset( $_POST['bpfwp-confirm-rule-contract'] ) && '1' === $_POST['bpfwp-confirm-rule-contract'] ) ) {
+				update_post_meta( $post_id, 'bpfwp-rule-contract-version', 1 );
+			}
 
 			return $post_id;
 		}
@@ -1239,16 +1387,21 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @access public
 		 * @param  array $options The functions, options or metas that should be displayed.
 		 */
-		public function print_helper_options( $operation, $options ) { 
-			
-			foreach ($options as $option) { ?>
+		public function print_helper_options( $operation, $options ) {
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-source-policy.php';
+			foreach ( $options as $option ) {
+				if ( ! isset( $option['value'] ) || ! bpfwpSchemaSourcePolicy::is_registered( $operation . ' ' . $option['value'] ) ) {
+					continue;
+				}
+				?>
 			<div class="bpfwp-schema-defaults-helper-option" data-helper_value="<?php echo esc_attr( $operation . ' ' . $option['value'] ); ?>">
 				<div class="bpfwp-schema-defaults-helper-option-name"><?php echo esc_html( $option['display_name'] ); ?></div>
 				<div class="bpfwp-schema-defaults-helper-option-description"><?php echo esc_html( $option['description'] ); ?></div>
 			</div>
 			<div class="bpfwp-clear"></div>
 
-			<?php } 
+				<?php
+			}
 		}
 
 		/**

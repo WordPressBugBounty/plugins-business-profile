@@ -55,6 +55,16 @@
 .bpfwp-welcome-screen-box h2 {
 	cursor: pointer;
 }
+.bpfwp-setup-section {
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	width: 100%;
+	cursor: pointer;
+}
+.bpfwp-setup-section:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 
 .bpfwp-welcome-screen-box-content {
 	position: relative;

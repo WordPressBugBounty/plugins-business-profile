@@ -1,9 +1,12 @@
 const { __ } = wp.i18n;
 const {	registerBlockType } = wp.blocks;
 const { SelectControl, CheckboxControl, PanelBody, Disabled } = wp.components;
-const {	ServerSideRender } = wp.serverSideRender;
+const ServerSideRender = wp.serverSideRender.default || wp.serverSideRender;
 const {	InspectorControls } = wp.editor;
-const {	locationOptions } = bpfwp_blocks;
+const PublicLocationSelect = window.bpfwpLocationSelect;
+const locationOptions = bpfwp_blocks.locationOptions.length ? bpfwp_blocks.locationOptions : [
+	{value: 0, label: __('Use the main Business Profile', 'business-profile')}
+];
 
 registerBlockType( 'business-profile/contact-card', {
 	title: __( 'Contact Card', 'business-profile' ),
@@ -72,14 +75,12 @@ registerBlockType( 'business-profile/contact-card', {
 			<div>
 				<InspectorControls>
 					<PanelBody>
-						{locationOptions.length ? (
-							<SelectControl
+							<PublicLocationSelect
 								label={ __( 'Select a Location', 'business-profile' ) }
 								value={ attributes.location }
-								onChange={ ( location ) => setAttributes( { location: parseInt( location, 10 ) } ) }
 								options={ locationOptions }
+								onChange={ ( location ) => setAttributes( { location: parseInt( location, 10 ) } ) }
 							/>
-						) : ''}
 						<CheckboxControl
 							label={ __( 'Show Name', 'business-profile') }
 							checked={ attributes.show_name }

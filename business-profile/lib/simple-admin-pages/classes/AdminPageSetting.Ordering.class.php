@@ -24,6 +24,27 @@ class sapAdminPageSettingOrdering_2_6_19 extends sapAdminPageSetting_2_6_19 {
 
 	public $sanitize_callback = 'sanitize_text_field';
 
+	/** Read the submitted row order even when the browser has cached old JavaScript. */
+	public function sanitize_callback_wrapper( $value ) {
+		$all_rows = isset( $_POST['sap_ordering_keys'] ) && is_array( $_POST['sap_ordering_keys'] ) ? $_POST['sap_ordering_keys'] : array();
+		$rows     = isset( $all_rows[ $this->id ] ) && is_array( $all_rows[ $this->id ] ) ? wp_unslash( $all_rows[ $this->id ] ) : null;
+		$labels   = is_array( $this->value ) ? $this->value : json_decode( html_entity_decode( (string) $this->value ), true );
+		if ( ! is_array( $labels ) || ! $labels ) {
+			$labels = is_array( $this->items ) ? $this->items : json_decode( (string) $this->items, true );
+		}
+		if ( ! is_array( $labels ) || ! is_array( $rows ) || count( $rows ) !== count( $labels ) ) {
+			return parent::sanitize_callback_wrapper( $value );
+		}
+		$ordered = array();
+		foreach ( $rows as $key ) {
+			if ( ! is_string( $key ) || ! array_key_exists( $key, $labels ) || isset( $ordered[ $key ] ) ) {
+				return parent::sanitize_callback_wrapper( $value );
+			}
+			$ordered[ $key ] = $labels[ $key ];
+		}
+		return wp_json_encode( $ordered );
+	}
+
 	/**
 	 * Add in the JS requried for the values to be stored
 	 * @since 2.5
@@ -31,7 +52,7 @@ class sapAdminPageSettingOrdering_2_6_19 extends sapAdminPageSetting_2_6_19 {
 	public $scripts = array(
 		'sap-ordering-table' => array(
 			'path'			=> 'js/ordering.js',
-			'dependencies'	=> array( 'jquery' ),
+			'dependencies' => array( 'jquery', 'jquery-ui-sortable' ),
 			'version'		=> SAP_VERSION,
 			'footer'		=> true,
 		),
@@ -75,7 +96,7 @@ class sapAdminPageSettingOrdering_2_6_19 extends sapAdminPageSetting_2_6_19 {
 						<?php foreach ( $values as $value => $label ) { ?>
 							<tr class='sap-ordering-table-row'>
 								<td>
-									<input type='hidden' value='<?php echo esc_attr( $value ); ?>' />
+									<input type='hidden' name='sap_ordering_keys[<?php echo esc_attr( $this->id ); ?>][]' value='<?php echo esc_attr( $value ); ?>' />
 									<span><?php echo esc_html( $label ); ?></span>
 								</td>
 							</tr>

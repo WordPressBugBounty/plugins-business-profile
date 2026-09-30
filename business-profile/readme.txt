@@ -3,32 +3,37 @@ Contributors: FiveStarPlugins
 Author URI: https://www.fivestarplugins.com/
 Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
-Tested Up To: 7.0
+Tested Up To: 7.1
 Tags: business profile, contact card, schema, structured data, google map
-Stable tag: 2.3.21
+Stable tag: 2.4.0
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
-Add structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Map, opening hours and more.
+Add structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Maps, opening hours and more.
 
 == Description ==
 
-Add schema structured data to any page and/or post type on your site. Also easily create a contact card to add all your business details with the correct structured data. Enhance your site with SEO friendly Schema.org markup!
+Keep your website's business details, opening hours and location information accurate and easy to find. Five Star Business Profile and Schema lets you create contact cards with addresses, phone numbers, opening hours, holiday exceptions and optional Google Maps, alongside Schema.org structured data that reflects your published business information.
 
-<strong>The plugin includes a Gutenberg contact card block as well as a contact card shortcode, so you can display your business info, with included structured data, on any page, no matter which page editing system you are using.</strong>
+<strong>Display your contact card with a Gutenberg block, shortcode or widget. Manage one business or multiple locations, and create additional schema rules for pages, posts and supported post types.</strong>
+
+Business Profile manages information published on your WordPress website. It does not update Google Business Profile or other external business listings, and structured data does not guarantee a particular search appearance or ranking.
+
 
 = Key Features =
 
-* Add LD+JSON structured data to any or every page or post on your site
-* Support for all organization schema types
-* Support for all schema rich results types
-* Customize general/global schema data on the post edit screen
-* Create an SEO-friendly contact card that you can add via Gutenberg block or shortcode
-* Easily include a Google map, opening hours and all your business details
-* Add multiple locations
-* Test any page on your site using Google's Rich Results Test
+* Display business contact details with a Gutenberg block, shortcode or widget.
+* Publish opening hours and exceptions, including overnight hours and holiday closures.
+* Manage multiple locations with separate contact details and schedules.
+* Choose whether location fields use the main business value, a local value or an intentionally empty value.
+* Distinguish public business locations from internal resources.
+* Add an optional Google Map and directions link to your contact card.
+* Follow a resumable setup process to enter business details and prepare a contact page.
+* Add JSON-LD structured data using the included organization and content schema types.
+* Customize schema values for individual pages and posts, including nested and repeated fields.
+* Open Google's Rich Results Test to inspect a page's supported structured data.
 
-<em>Five Business Profile and Schema is very user friendly and comes with a walk-through that runs automatically when you activate the plugin and will help you add your business info, create your contact card and add a schema rule.</em>
+<em>Five Star Business Profile and Schema includes a guided setup process for your contact information, opening hours and contact page. You can select an existing page or prepare a new draft, then review the page before publishing.</em>
 
 [youtube https://www.youtube.com/watch?v=QuDl7m2okYc]
 
@@ -44,7 +49,7 @@ Whether you're running your website for a local business, a corporation, a resta
 
 The Five Star Business Profile and Schema plugin is also perfect for adding your contact details to any page on your site. It comes with a handy form to help you fill in your info, which then gets automatically included on your site both as a contact card and as schema structured data, using the new LD+JSON format.
 
-Your contact card can be quickly added anywhere on your site using a block, shortocde or widget, which will display the folling info:
+Your contact card can be quickly added anywhere on your site using a block, shortocde or widget, which will display the following info:
 
 * Business name
 * Address
@@ -70,38 +75,72 @@ Choose from a wide array of microdata item types for your business schema, inclu
 
 = Google Maps Structured Data = 
 
-The integrated Google Maps features allow you to enhance your location structured data by displaying a business map on your site with full schema support. Your business location, including the business address, will be displayed on a map (with the correct map schema), as well as in text with the correct location microdata.
+Add an optional Google Map and directions link to your contact card using your own Google Maps API key. Maps load as they approach the visible area of the page. Your textual business details remain available if a map cannot load.
+
+Review the map position and directions before publishing your contact page.
+
+Your business location, including the business address, will be displayed on a map (with the correct map schema), as well as in text with the correct location microdata.
 
 = Multiple Locations = 
 
-Business Profile supports multiple locations. This powerful feature works great for businesses that have several offices, for delivery services, for restaurants with multiple locations, etc. Business location schema is added to each entry and you can showcase your details using the Gutenberg schema block, via the location shortcode or with the included widget. For help getting started with this, you can visit:
+Business Profile supports multiple locations. This powerful feature works great for businesses that have several offices, for delivery services, for restaurants with multiple locations, etc. Business location schema is added to each entry and you can showcase your details using the Gutenberg schema block, via the location shortcode or with the included widget. 
+
+Using the contact card block, you can display a public location and search for public locations in the block's location selector.
+
+For help getting started with this, you can visit:
  
 [https://doc.fivestarplugins.com/plugins/business-profile/user/multiple-locations](https://doc.fivestarplugins.com/plugins/business-profile/user/multiple-locations)
 
-The multiple location structured data for your business also syncs up with the Five Star Restaurant Reservations to automatically offer a dropdown in your reservation form, so people can pick which location they want to book at.
+For supported location fields, choose “Use main business value,” “Use this location value” or “Leave intentionally empty.” This lets you share common details without forcing every location to show the same information. Existing locations can retain their existing field behavior until you change it.
+
+Choose a publication purpose before publishing a new location. Public business locations can appear in Business Profile's public output. Internal resources are excluded from that output.
 
 You can choose separate organization schema, corporation schema or local business schema for each new location you create, so each schema shortcode and each page's contact info is uniquely optimized with SEO and search results in mind.
 
+### Five Star Restaurant Reservations Integration
+
+The multiple location structured data for your business also syncs up with the Five Star Restaurant Reservations to automatically offer a dropdown in your reservation form, so people can pick which location they want to book at.
+
+Public opening hours are separate from reservation availability. If you also use Five Star Restaurant Reservations, manage booking availability in that plugin and verify your connected location workflow before changing location purposes.
+
 [youtube https://www.youtube.com/watch?v=NIB0iFC4tCM]
 
-= Premium Schema Features =
+= WooCommerce Integration (Requires Premium) =
 
-The premium version of the Five Star Business Profile and Schema plugin comes with several extra features that will help you set up and refine your structured data more quickly and more accurately. 
+The premium version includes new integrations that will help you automatically apply specific structured data to certain areas of your site. For example, the WooCommerce Integration option will automatically add full Product schema to your WooCommerce shop, helping to enhance the search results for your products. 
 
-These include a default helper functionality for your schema. This option adds a large list of default values to the plugin and allows you to easily populate each schema property with one of these values. No need to be familiar with all the different schema properties and types. Just choose the default you want from the included list and you're off and running!
-
-The premium version also includes new integrations that will help you automatically apply specific structured data to certain areas of your site. For example, the WooCommerce Integration option will automatically add full Product schema to your WooCommerce shop, helping to enhance the search results for your products. 
+= Post/Article Integration (Requires Premium) =
 
 There is also a posts integration option, which will automatically add Article rich snippets to the default Posts post type. This way, all your articles and blog posts can have the correct schema, without the need for manually inputting it each time you add a new post.
 
+= Yoast SEO and Rank Math Integration (Requires Premium) =
+
+Five Star Business Profile and Schema Premium with new features that let you control SEO Ownership, which lets you choose how the business entity's structured data is published, either directly by the plugin or, instead, by Yoast or Rank Math. This can be used in the following modes:
+
+* Native: Business Profile publishes its own business structured data.
+* Integrated: Business Profile supplies its business information to the supported SEO plugin's schema output and suppresses its separate business entity only when that output is confirmed.
+* External: The SEO plugin (Yoast or Rank Math) supplies the business entity. Business Profile suppresses its separate entity only when it confirms a matching business entity in the provider's output. This mode does not copy Business Profile information into the SEO plugin.
+
+These controls apply to the Business Profile business entity on eligible pages. They do not change SEO titles or meta descriptions, or automatically remove unrelated custom, Article or Product schema.
+
+= Five Star Restaurant Manager Mobile App Access (Requires Premium) =
+
 The premium version also syncs with our Five Star Restaurant Manager mobile app (available for iOS and Android) and lets you update your business and contact card info on the go, from a phone or tablet, and without having to be logged in to your WordPress site.
+
+= Premium Schema Features =
+
+The premium version of the Five Star Business Profile and Schema plugin also comes with several extra features that will help you set up and refine your structured data more quickly and more accurately. 
+
+These include a default helper functionality for your schema. This option adds a large list of default values to the plugin and allows you to easily populate each schema property with one of these values. No need to be familiar with all the different schema properties and types. Just choose the default you want from the included list and you're off and running!
 
 Key premium features include:
 
-* Schema default helpers, which let you choose defaults for all schema properties.
-* Post rich snippets, to automatically add full Article schema.org markup to posts
-* WooCommerce Integration, to automatically add full Product structured data to your shop.
-* Access to the Five Star Restaurant Manager mobile app, to manage your business and contact card info on the go. 
+* Additional contact-card layouts, styling and element-order controls.
+* Schema default helpers for supported public data sources.
+* Article structured-data automation for supported posts.
+* Product structured-data automation for supported WooCommerce products.
+* Supported main-business contact updates through the Five Star Restaurant Manager mobile app and Premium Helper.
+* Business schema ownership controls for supported Yoast SEO and Rank Math configurations.
 
 This schema structured data and contact card plugin is one part of our suite of plugins designed to give you the best WordPress business and restaurant experience. Our plugins provide an intuitive and easy-to-use interface that make sure you don't lose out on business to your competitors. For more info:
 
@@ -135,13 +174,13 @@ or
 
 = Getting Started =
 
-After activating the plugin, <strong>a walk-through will run automatically</strong>, which will help add your business info, create a contact card and set up some structured data.
+After activating the plugin, use the guided setup to enter your business details and public opening hours, then select an existing contact page or prepare a new draft. Review the page and publish it when ready. Setup can be resumed without starting over.
 
 You can also follow these steps to configure the plugin. 
 
 1. To create a business profile with schema structured data:
     * Click on 'Business Profile' in the WordPress admin sidebar menu. This will bring you to the page where you can create or edit your contact card
-    * Choose a schema type and then file in the company contact info.
+    * Choose a schema type and then fill in the company contact info.
     * Set up a schedule/opening hours for your location.
     * Click Save Changes and it will automatically save your vcard business info.
 
@@ -204,6 +243,22 @@ That way, when someone looks for a real estate agent or a restaurant in your are
 
 You may not find a type that’s a perfect match for your business. Choose the option that’s most appropriate for your business, and fall back to a more generic type, such as Local Business, if you need.
 
+= Does this update my Google Business Profile listing? =
+
+No. Business Profile updates information and structured data on your WordPress website. Manage Google Business Profile and other external listings separately.
+
+= Do opening hours control restaurant booking availability? =
+
+No. Public opening hours and reservation availability are separate. Configure booking availability in Five Star Restaurant Reservations.
+
+= Can I leave a location field blank without using the main business value? =
+
+Yes. Choose “Leave intentionally empty” for that field in the location's inheritance controls. Use “Use main business value” when you want to inherit the main settings instead.
+
+= Why did a custom schema default stop appearing after the update? =
+
+Dynamic schema values must use registered public data sources. Previously saved expressions that are not registered are no longer resolved. Review the affected schema field and choose a supported source or a literal value. Custom integrations may need a developer to register an intentionally public source.
+
 = More questions =
 
 You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugins/business-profile/user/). Developers interested in templates, filters and theme support can view the [Developer Documentation](https://doc.fivestarplugins.com/plugins/business-profile/developer/).
@@ -235,6 +290,23 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 
 == Changelog ==
+
+= 2.4.0 (2026-09-30) =
+- **IMPORTANT NOTE: This is a major update with several big changes. We suggest testing this update in a staging or development environment before updating your live environment. Or wait a few days before updating in the event that an issue is identified that requires a fix/new update.**
+- Added a guided setup process for business details, opening hours and contact-page creation, with the ability to resume setup.
+- Added location-purpose controls to distinguish public business locations from internal resources and exclude internal resources from Business Profile's public output.
+- Added per-field location controls to use the main business value, use a location-specific value or leave a field intentionally empty.
+- Improved the handling of opening hours and exceptions, including midnight, overnight hours, date ranges and closures, across contact cards and structured data.
+- Improved saving of page-specific schema values, including nested fields, repeated fields and intentionally empty values.
+- Added controls for coordinating business structured data with supported Yoast SEO and Rank Math configurations, using the updated Premium Helper plugin.
+- Improved handling of supported contact information updates.
+- Added administrator tools for checking contact-page publication and identifying schema rules that use unsupported data sources.
+- Improved public location search in the contact-card block, including clearer search guidance and result messages.
+- Improved contact card layouts on narrow screens and deferred map loading until maps approach the visible area.
+- Fixed duplicate automatic contact cards on pages that already contain a contact card.
+- Fixed issue with the Contact Elements Order setting not saving.
+- Fixed missing icons in contact card block preview.
+- Restricted dynamic schema values to registered public data sources and improved JSON-LD encoding for contact cards and schema rules.
 
 = 2.3.21 (2026-07-30) =
 - Added a direct support option to the deactivation survey, making it easier to get help right away if you're uninstalling due to an issue.
@@ -448,3 +520,8 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 - Updated the styling of certain default features to be consistent with new features
 - Other styling and ease-of-use changes
 - Updated the order, layout and descriptions of several options
+
+== Upgrade Notice ==
+
+= 2.4.0 =
+This update changes location publication controls, opening-hours handling and schema data sources. Back up your site and test the update before applying it to a live site, especially if you use custom schema sources, template overrides, Premium Helper or restaurant integrations. Review any blocked schema defaults and check your public contact pages after updating. Premium SEO integration requires the coordinated Helper update and a supported provider configuration.

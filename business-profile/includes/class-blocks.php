@@ -42,14 +42,14 @@ if ( ! class_exists( 'bpfwpBlocks', false ) ) :
 		 */
 		public function register() {
 
-			if ( !function_exists( 'register_block_type' ) ) {
+			if ( ! function_exists( 'register_block_type' ) ) {
 				return;
 			}
 
 			wp_register_script(
 				'business-profile-blocks',
 				BPFWP_PLUGIN_URL . '/assets/js/blocks.build.js',
-				array( 'wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor' ),
+				array( 'wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor', 'wp-server-side-render', 'bpfwp-public-selector' ),
 				BPFWP_VERSION
 			);
 
@@ -64,73 +64,76 @@ if ( ! class_exists( 'bpfwpBlocks', false ) ) :
 			wp_register_style(
 				'bpfwp-default',
 				BPFWP_PLUGIN_URL . '/assets/css/contact-card.css',
-				array(),
+				array( 'dashicons' ),
 				BPFWP_VERSION
 			);
 
-			register_block_type( 'business-profile/contact-card', array(
-				'editor_script' => array('business-profile-blocks', 'bpfwp-map'),
-				'editor_style' => 'bpfwp-default',
-				'render_callback' => 'bpwfwp_print_contact_card',
-				'attributes' => array(
-					'location' => array(
-						'type' => 'number',
-						'minimum' => '0',
+			register_block_type(
+				'business-profile/contact-card',
+				array(
+					'editor_script'   => array( 'business-profile-blocks', 'bpfwp-map' ),
+					'editor_style'    => 'bpfwp-default',
+					'render_callback' => 'bpwfwp_print_contact_card',
+					'attributes'      => array(
+						'location'                 => array(
+							'type'    => 'number',
+							'minimum' => '0',
+						),
+						'show_name'                => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_address'             => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_get_directions'      => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_phone'               => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_cell_phone'          => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_whatsapp'            => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_fax'                 => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_contact'             => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_opening_hours'       => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_opening_hours_brief' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'show_map'                 => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_image'               => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_booking_link'        => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
 					),
-					'show_name' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_address' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_get_directions' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_phone' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_cell_phone' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_whatsapp' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_fax' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_contact' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_opening_hours' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_opening_hours_brief' => array(
-						'type' => 'boolean',
-						'default' => false,
-					),
-					'show_map' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_image' => array(
-						'type' => 'boolean',
-						'default' => true,
-					),
-					'show_booking_link' => array(
-						'type' => 'boolean',
-						'default' => false,
-					)
 				)
-			) );
+			);
 
 			add_action( 'admin_init', array( $this, 'register_admin' ) );
 		}
@@ -149,16 +152,21 @@ if ( ! class_exists( 'bpfwpBlocks', false ) ) :
 			$location_options = array();
 
 			if ( $bpfwp_controller->settings->get_setting( 'multiple-locations' ) ) {
-				$locations = new WP_Query( array(
-					'post_type' => $bpfwp_controller->cpts->location_cpt_slug,
-					'posts_per_page' => 1000,
-					'post_status' => 'publish',
-				) );
+				$locations = new WP_Query(
+					array(
+						'post_type'      => $bpfwp_controller->cpts->location_cpt_slug,
+						'posts_per_page' => 50,
+						'post_status'    => 'publish',
+						'meta_query'     => bpfwpLocationPublication::public_meta_query(),
+					)
+				);
 
-				$location_options = array( array(
-					'value' => 0,
-					'label' => __('Use the main Business Profile'),
-				) );
+				$location_options = array(
+					array(
+						'value' => 0,
+						'label' => __( 'Use the main Business Profile' ),
+					),
+				);
 				while ( $locations->have_posts() ) {
 					$locations->the_post();
 					$location_options[] = array(
@@ -173,9 +181,12 @@ if ( ! class_exists( 'bpfwpBlocks', false ) ) :
 				'business-profile-blocks',
 				sprintf(
 					'var bpfwp_blocks = %s;',
-					json_encode( array(
-						'locationOptions' => $location_options,
-					) )
+					wp_json_encode(
+						array(
+							'locationOptions' => $location_options,
+						),
+						JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+					)
 				),
 				'before'
 			);

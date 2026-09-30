@@ -312,7 +312,8 @@ BLOCK PATTERNS
 	}
 	.bp-contact-card.panels > div {
 		width: auto;
-		min-width: 400px;
+		min-width: 0;
+		max-width: 100%;
 	}
 	.bp-contact-card.panels > div.bp-map {
 		width: 100%;
@@ -320,7 +321,7 @@ BLOCK PATTERNS
 }
 @media screen and (max-width: 450px) {
 	.bp-contact-card.panels > div {
-		min-width: 300px;
+		min-width: 0;
 	}
 }
 
@@ -335,4 +336,8 @@ BLOCK PATTERNS
 .bp-contact-card.panelscentered .bp-opening-hours .bp-title {
 	text-align: center;
 }
+
+.bp-contact-card { overflow-wrap: anywhere; }
+.bp-contact-card > div { box-sizing: border-box; }
+.bp-contact-card a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 

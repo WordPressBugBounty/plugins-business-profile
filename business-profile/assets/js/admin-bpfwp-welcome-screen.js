@@ -19,6 +19,7 @@ jQuery(document).ready(function() {
 		var contact_page_title = jQuery('.bpfwp-welcome-screen-add-contact-page-name input').val();
 
 		var params = {
+			contact_page_id: jQuery('#bpfwp-setup-existing-page').val(),
 			contact_page_title: contact_page_title,
 			nonce: bpfwp_getting_started.nonce,
 			action: 'bpfwp_welcome_add_contact_page'
@@ -26,9 +27,7 @@ jQuery(document).ready(function() {
 
 		var data = jQuery.param( params );
 
-		jQuery.post(ajaxurl, data, function(response) {});
-
-		bpfwp_toggle_section('set_contact_info');
+		bpfwp_save_setup(data, 'create_schema', this);
 	});
 
 	jQuery('.bpfwp-welcome-screen-set-contact-information-button').on('click', function() {
@@ -41,10 +40,6 @@ jQuery(document).ready(function() {
 		var phone = jQuery('input[name="bpfwp-contact-phone"]').val();
 		var email = jQuery('input[name="bpfwp-contact-email"]').val();
 
-		jQuery('input[name="bpfwp-contact-name"]').val('');
-		jQuery('textarea[name="bpfwp-contact-address"]').val('');
-		jQuery('input[name="bpfwp-contact-phone"]').val('');
-		jQuery('input[name="bpfwp-contact-email"]').val('');
 
 		var params = {
 			schema_type: schema_type,
@@ -58,9 +53,7 @@ jQuery(document).ready(function() {
 
 		var data = jQuery.param( params );
 
-		jQuery.post(ajaxurl, data, function(response) {});
-
-		bpfwp_toggle_section('set_hours');
+		bpfwp_save_setup(data, 'set_hours', this);
 	});
 
 	jQuery('.bpfwp-welcome-screen-set-hours-button').on('click', function() {
@@ -69,9 +62,7 @@ jQuery(document).ready(function() {
 
 		var data = form_data + '&nonce=' + bpfwp_getting_started.nonce + '&action=bpfwp_welcome_set_opening_hours';
 
-		jQuery.post(ajaxurl, data, function(response) {});
-
-		bpfwp_toggle_section('create_schema');
+		bpfwp_save_setup(data, 'create_contact_page', this);
 	});
 
 });
@@ -79,4 +70,21 @@ jQuery(document).ready(function() {
 function bpfwp_toggle_section(page) {
 	jQuery('.bpfwp-welcome-screen-box').removeClass('bpfwp-welcome-screen-open');
 	jQuery('.bpfwp-welcome-screen-' + page).addClass('bpfwp-welcome-screen-open');
+	jQuery('.bpfwp-welcome-screen-' + page + ' h2').attr('tabindex', '-1').trigger('focus');
+}
+
+function bpfwp_save_setup(data, next, button) {
+	jQuery(button).prop('disabled', true);
+	const status = jQuery('#bpfwp-setup-status');
+	status.text('');
+	jQuery.post(ajaxurl, data).done(function (response) {
+		if (!response || response.success !== true) {
+			status.text(response && response.data && response.data.message || bpfwp_getting_started.save_error);
+			return;
+		}
+		status.text(response.data.message);
+		bpfwp_toggle_section(next);
+	}).fail(function (xhr) {
+		status.text(xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message || bpfwp_getting_started.save_error);
+	}).always(function () { jQuery(button).prop('disabled', false); });
 }

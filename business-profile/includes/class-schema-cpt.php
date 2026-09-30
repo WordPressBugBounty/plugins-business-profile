@@ -107,17 +107,31 @@ if ( ! class_exists( 'bpfwpSchemaCPT' ) ) :
 		 */
 		public function set_properties( $args ) {
 
-			if ( isset($args['post_id']) ) { $this->post_id = $args['post_id']; }
-			if ( isset($args['target_type']) ) { $this->target_type = $args['target_type']; }
-			if ( isset($args['target_value']) ) { $this->target_value = $args['target_value']; }
-			if ( isset($args['schema_type']) ) { $this->schema_type = $args['schema_type']; }
-			if ( isset($args['field_defaults']) ) { $this->field_defaults = $args['field_defaults']; }
-			if ( isset($args['default_display']) ) { $this->default_display = $args['default_display']; }
+			if ( isset( $args['post_id'] ) ) {
+				$this->post_id = $args['post_id'];
+			}
+			if ( isset( $args['target_type'] ) ) {
+				$this->target_type = $args['target_type'];
+			}
+			if ( isset( $args['target_value'] ) ) {
+				$this->target_value = $args['target_value'];
+			}
+			if ( isset( $args['schema_type'] ) ) {
+				$this->schema_type = $args['schema_type'];
+			}
+			if ( isset( $args['field_defaults'] ) ) {
+				$this->field_defaults = $args['field_defaults'];
+			}
+			if ( isset( $args['default_display'] ) ) {
+				$this->default_display = $args['default_display'];
+			}
 
-			if ( isset($args['schema_type']) and $this->schema_type and is_file( BPFWP_PLUGIN_DIR . '/includes/schemas/class-schema-' . strtolower( $this->schema_type ) . '.php' ) ) {
-				include_once BPFWP_PLUGIN_DIR . '/includes/schemas/class-schema-' . strtolower( $this->schema_type ) . '.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-source-policy.php';
+			$schema_file = bpfwpSchemaSourcePolicy::schema_file( $this->schema_type );
+			if ( $schema_file ) {
+				include_once $schema_file;
 
-				$class_name = 'bpfwpSchema' . $this->schema_type;
+				$class_name         = 'bpfwpSchema' . $this->schema_type;
 				$this->schema_class = new $class_name( array( 'depth' => 0 ) );
 			}
 		}
@@ -131,367 +145,214 @@ if ( ! class_exists( 'bpfwpSchemaCPT' ) ) :
 		 * @return void
 		 */
 		public function set_admin_hooks() {
-			add_action( 'edit_form_after_title', array( $this, 'add_meta_nonce' ) );
-			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+
+			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ), 10, 2 );
 			add_action( 'save_post', array( $this, 'save_meta' ) );
-
-			wp_enqueue_script( 'schema-cpt', BPFWP_PLUGIN_URL . '/assets/js/schema-cpt.js', array( 'jquery'), BPFWP_VERSION );
+			wp_enqueue_script( 'schema-cpt', BPFWP_PLUGIN_URL . '/assets/js/schema-cpt.js', array( 'jquery' ), BPFWP_VERSION );
+			wp_enqueue_script( 'bpfwp-schema-values', BPFWP_PLUGIN_URL . '/assets/js/schema-values.js', array(), BPFWP_VERSION, true );
 		}
-		
 
-		/**
-		 * Set admin hooks to display and save the schema meta boxes based on the target type and value
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @return void
-		 */
 		public function set_display_hooks() {
-			if ( $this->validate_target() ) {
+
+			if ( $this->public_context() && $this->validate_target( is_singular() ? get_queried_object() : null ) ) {
 				add_filter( 'bpfwp_ld_json_output', array( $this, 'output_ld_json_data' ) );
 			}
 		}
 
-		/**
-		 * Output a hidden nonce field to secure the saving of post meta
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @return void
-		 */
-		public function add_meta_nonce() {
-			if ( $this->validate_target() ) {
-				wp_nonce_field( 'bpfwp_schema_meta', 'bpfwp_schema_meta_nonce' );
+		private function public_context() {
+
+			if ( is_admin() || is_feed() || is_404() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+				return false;
 			}
+			if ( is_preview() ) {
+				return false;
+			}
+			if ( is_singular() ) {
+				$post = get_queried_object();
+				if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status || $post->post_password || ! is_post_type_viewable( $post->post_type ) || 'internal' === get_post_meta( $post->ID, 'bpfwp-location-purpose', true ) ) {
+					return false;
+				}
+			}
+			return true;
 		}
 
-		/**
-		 * Check whether meta boxes, nonces, etc. should be displayed during the current WP load process
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @return void
-		 */
-		public function validate_target( $target = null) {
-			global $post;
-			
-			if ( ! $target ) {
+		public function add_meta_nonce() {
+			wp_nonce_field( 'bpfwp_rule_' . $this->post_id, 'bpfwp_rule_nonce_' . $this->post_id );
+		}
+
+		public function form_signature() {
+
+			return hash( 'sha256', wp_json_encode( array( $this->schema_type, $this->target_type, $this->target_value, $this->field_defaults, $this->default_display, get_post_meta( $this->post_id, 'bpfwp-rule-contract-version', true ) ) ) );
+		}
+
+		public function validate_target( $target = null ) {
+
+			if ( 'global' === $this->target_type ) {
+				return true;
+			}
+			if ( null === $target && is_admin() ) {
+				global $post;
 				$target = $post;
 			}
-
-			$valid_target = false;
-
-			if ( $this->target_type == 'post' and isset($target) and $target->ID == $this->target_value ) {
-				$valid_target = true;
+			if ( ! $target instanceof WP_Post ) {
+				return false;
 			}
-
-			if ( $this->target_type == 'post_type' and isset($target) and $target->post_type == $this->target_value && ! is_archive() ) {
-				$valid_target = true;
+			if ( 'post_type' === $this->target_type ) {
+				return $target->post_type === $this->target_value;
 			}
-
-			if ( $this->target_type == 'page' and isset($target) and $target->ID == $this->target_value ) {
-				$valid_target = true;
-			}
-
-			return $valid_target;
+			return in_array( $this->target_type, array( 'post', 'page' ), true ) && $target->post_type === $this->target_type && (int) $this->target_value === (int) $target->ID;
 		}
 
-		/**
-		 * Registers a meta box for this schema CPT
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  WP_Post $post The current post object.
-		 * @return void
-		 */
-		public function add_meta_box( $post ) { 
-			if ( ! $this->validate_target() ) { return; }
+		public function add_meta_box( $post_type, $post = null ) {
 
-			// Metabox to enter schema type.
-			$meta_box = array(
-				'id'        => 'bpfwp_schema_' . strtolower( $this->schema_type ) . '_metabox',
-				'title'     => $this->schema_type . __( ' Details', 'business-profile' ),
-				'callback'  => array( $this, 'print_schema_metabox' ),
-				'context'   => 'normal',
-				'priority'  => 'default',
-			);
-
-			if ( $this->target_type == 'post' ) { $meta_box['post_type'] = 'post'; }
-			elseif ( $this->target_type == 'page' ) { $meta_box['post_type'] = 'page'; }
-			elseif ( $this->target_type == 'post_type' ) { $meta_box['post_type'] = $this->target_value; }
-
-			// Create filter so addons can modify the metaboxes.
-			$meta_box = apply_filters( 'bpfwp_schema_cpt_meta_box', $meta_box );
-
-			add_meta_box(
-				$meta_box['id'],
-				$meta_box['title'],
-				$meta_box['callback'],
-				$meta_box['post_type'],
-				$meta_box['context'],
-				$meta_box['priority']
-			);
-		}
-
-
-		/**
-		 * Output the metabox HTML to customize a schema's meta values
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  WP_Post $post The current post object.
-		 * @return void
-		 */
-		public function print_schema_metabox( $post ) { 
-			$specified_values = get_post_meta( $post->ID, 'bpfwp_values_' . $this->schema_type, true );
-
-			?>
-
-			<div class="bpfwp-meta-input bpfwp-meta-post_type">
-				<h3>
-					<?php esc_html_e( 'Schema Field Values', 'business-profile' ); ?>
-				</h3>
-
-				<?php foreach ( $this->schema_class->fields as $field ) {
-						$this->display_field( $field, $post, $specified_values); 
-				} ?>
-
-			</div>
-		<?php }
-
-		/**
-		 * Display a field to be edited for this CPT schema
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  bpfwpSchemaField $field The field to be displayed.
-		 * @param  WP_Post $post The current post object.
-		 * @param  array $specified_values The values that were saved for this CPT schema previously.
-		 * @param  int $count The number of times this field has been displayed.
-		 * @return void
-		 */
-		public function display_field( $field, $post, $specified_values, $field_prefix = '', $count = 1 ) { 
-
-			$child_depth = 1;
-
-			if ( isset($specified_values[$field_prefix . '_' . $field->slug][$count]) ) { $value = $specified_values[$field_prefix . '_' . $field->slug][$count]; }
-
-			$field->callback = ( isset($this->field_defaults[$field_prefix . '_' . $field->slug]) and $this->field_defaults[$field_prefix . '_' . $field->slug] != '' ) ? $this->field_defaults[$field_prefix . '_' . $field->slug] : $field->callback;
-			
-			$placeholder = $field->get_default_value( $post->ID, 'post' );
-
-			switch ( $field->input ) {
-				case 'SchemaField': 
-					$field_prefix .= '_' . $field->slug;
-
-					for ( $i = 1; $i <= $child_depth; $i++ ) {
-						echo '<h4 class="' . ( $field->recommended ? 'recommended' : '' ) . '" data-field_name="' . esc_attr( $field->name ) . '">' . esc_html( $field->name ) . '</h4>';
-					
-						echo '<div class="bpfwp-schema-field-container" data-field_name="' . esc_attr( $field->name ) . '">';
-
-						foreach ( $field->children as $field_child ) { $child_depth = max($child_depth, $this->display_field( $field_child, $post, $specified_values, $field_prefix, $i ) ); }
-
-						echo '</div>';
-					}
-
-					if ( $field->repeatable ) { 
-						echo '<div class="bpfwp-clear"></div>';
-						echo '<input type="hidden" name="count_' . esc_attr( $this->schema_type ) . '[' . esc_attr( $field_prefix ) . ']" value="' . esc_attr( $child_depth ) . '" />';
-						echo '<button class="bpfwp-add-repeatable-field" data-schema_type="' . esc_attr( $this->schema_type ) . '" data-field_name="' . esc_attr( $field->name ) . '" data-field_prefix="' . esc_attr( $field_prefix ) . '" data-field_slug="' . esc_attr( $field->slug ) . '">';
-						echo __('Add Another ', 'business-profile') . esc_html( $field->name );
-						echo '</button>';
-					}
-
-					// reset depth in case you're going up to a schema field a level above
-					$child_depth = 1;
-
-				break;
-
-				case 'textarea':
-					// update the child_depth parameter if in a non-schema field
-					if ( isset($specified_values[$field_prefix . '_' . $field->slug]) and is_array($specified_values[$field_prefix . '_' . $field->slug]) ) { $child_depth = sizeOf( $specified_values[$field_prefix . '_' . $field->slug] ); }
-
-					echo '<div class="bpfwp-schema-field-container" data-field_name="' . esc_attr( $field->name ) . '">';
-
-						echo '<label class="' . ( $field->recommended ? 'recommended' : '' ) . '" for="' . esc_attr( $this->schema_type ) . '[' . esc_attr( $field_prefix ) . '_' . esc_attr( $field->slug ) . '][' . esc_attr( $count ) . ']">' . esc_html( $field->name ) . '</label>';
-
-						echo '<textarea name="' . esc_attr( $this->schema_type . '[' . $field_prefix . '_' . $field->slug . '][' . $count ) . ']" placeholder="' . ( isset($placeholder) ? esc_attr( $placeholder ) : "" ) . '">';
-							echo isset($value) ? esc_textarea( $value ) : '';
-						echo '</textarea>';
-						
-					echo '</div>';
-
-				break;
-
-				default:
-					// update the child_depth parameter if in a non-schema field
-					if ( isset($specified_values[$field_prefix . '_' . $field->slug]) and is_array($specified_values[$field_prefix . '_' . $field->slug]) ) { $child_depth = sizeOf( $specified_values[$field_prefix . '_' . $field->slug] ); }
-
-					echo '<div class="bpfwp-schema-field-container" data-field_name="' . esc_attr( $field->name ) . '">';
-
-						echo '<label class="' . ( $field->recommended ? 'recommended' : '' ) . '" for="' . esc_attr( $this->schema_type ) . '[' . esc_attr( $field_prefix ) . '_' . esc_attr( $field->slug ) . '][' . esc_attr( $count ) . ']">' . esc_html( $field->name ) . '</label>';
-
-						echo '<input type="' . esc_attr( $field->input ) . '" name="' . esc_attr( $this->schema_type ) . '[' . esc_attr( $field_prefix ) . '_' . esc_attr( $field->slug ) . '][' . esc_attr( $count ) . ']" placeholder="' . ( isset($placeholder) ? esc_attr( $placeholder ) : '' ) . '" value="' . ( isset($value) ? esc_attr( $value ) : '' ) . '" />';
-						
-					echo '</div>';
-
-			}
-
-			return $child_depth;
-		}
-
-
-		/**
-		 * Sanitize and save the schema post meta
-		 *
-		 * The actual sanitization and validation should be
-		 * performed in a bpfwpLocation object which will
-		 * handle all the location data, and perform loading
-		 * and saving.
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  int $post_id The current post ID.
-		 * @return int $post_id The current post ID.
-		 */
-		public function save_meta( $post_id ) {
 			global $bpfwp_controller;
-
-			if ( ! isset( $_POST['bpfwp_schema_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_schema_meta_nonce'] ), 'bpfwp_schema_meta' ) ) { // Input var okay.
-				return $post_id;
-			}
-
-			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				return $post_id;
-			}
-
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return $post_id;
-			}
-
-			$post = get_post( $post_id );
-
-			if ($post->post_type !== $bpfwp_controller->cpts->schema_cpt_slug) {
+			if ( ! $post instanceof WP_Post || $post_type === $bpfwp_controller->cpts->schema_cpt_slug || ! is_post_type_viewable( $post_type ) || ! $this->validate_target( $post ) ) {
 				return;
 			}
- 
-			if ( ! $this->validate_target( get_post( $post_id ) ) ) { 
-				return $post_id; 
-			}
-			
-			global $values;
-			$values = array();
-			foreach ( $this->schema_class->fields as $field ) {
-				$this->get_field_save_value('_', $field);
-			}
+			$box = apply_filters(
+				'bpfwp_schema_cpt_meta_box',
+				array(
+					'id'        => 'bpfwp_schema_rule_' . $this->post_id,
+					/* translators: 1: Schema type, 2: Rule ID. */
+					'title'     => sprintf( __( '%1$s Details — Rule #%2$d', 'business-profile' ), $this->schema_type, $this->post_id ),
+					'callback'  => array( $this, 'print_schema_metabox' ),
+					'post_type' => $post_type,
+					'context'   => 'normal',
+					'priority'  => 'default',
+				)
+			);
+			add_meta_box( $box['id'], $box['title'], $box['callback'], $box['post_type'], $box['context'], $box['priority'] );
+		}
 
-			update_post_meta( $post_id, 'bpfwp_values_' . $this->schema_type, $values );
+		public function print_schema_metabox( $post ) {
 
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-values.php';
+				$entry = bpfwpSchemaValues::entry( $this, $post->ID );
+			$name      = 'bpfwp_rules[' . $this->post_id . ']';
+			$this->add_meta_nonce();
+			$draft = get_transient( 'bpfwp_schema_draft_' . get_current_user_id() . '_' . $post->ID . '_' . $this->post_id );
+			if ( is_array( $draft ) ) {
+				echo '<details><summary>' . esc_html__( 'Recover an incomplete submission', 'business-profile' ) . '</summary><p>' . esc_html__( 'These are the submitted values the server received, retained for 24 hours. Later fields may be missing because of the server input limit. Your saved values below were preserved.', 'business-profile' ) . '</p><textarea class="large-text" rows="8" readonly>' . esc_textarea( wp_json_encode( $draft, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ) . '</textarea></details>';
+			}
+				echo '<input type="hidden" name="' . esc_attr( $name . '[present]' ) . '" value="1">';
+			echo '<input type="hidden" name="' . esc_attr( $name . '[signature]' ) . '" value="' . esc_attr( $this->form_signature() ) . '">';
+			echo '<p><label>' . esc_html__( 'Output on this page', 'business-profile' ) . ' <select name="' . esc_attr( $name . '[output]' ) . '">';
+			foreach ( array(
+				'inherit' => __( 'Follow rule', 'business-profile' ),
+				'include' => __( 'Include', 'business-profile' ),
+				'exclude' => __( 'Exclude', 'business-profile' ),
+			) as $mode => $label ) {
+				echo '<option value="' . esc_attr( $mode ) . '" ' . selected( $entry['output'] ?? 'inherit', $mode, false ) . '>' . esc_html( $label ) . '</option>';
+			}
+			echo '</select></label></p>';
+			echo '<p>' . esc_html__( 'Historical values are retained. Deeply repeated legacy fields may need recovery because their original format did not identify each parent. Saving affects only this rule.', 'business-profile' ) . '</p>';
+			$legacy   = get_post_meta( $post->ID, 'bpfwp_values_' . $this->schema_type, true );
+			$recovery = bpfwpSchemaValues::recovery( $this->schema_class->fields, is_array( $legacy ) ? $legacy : array() );
+			if ( $recovery ) {
+				echo '<details><summary>' . esc_html__( 'Recover ambiguous historical values', 'business-profile' ) . '</summary><p>' . esc_html__( 'These values were retained but cannot be assigned to a parent automatically. Copy each value into its intended item below. This recovery copy remains available after saving.', 'business-profile' ) . '</p><dl>';
+				foreach ( $recovery as $label => $values ) {
+					echo '<dt>' . esc_html( $label ) . '</dt><dd>' . esc_html( implode( ' · ', $values ) ) . '</dd>';
+				}
+				echo '</dl></details>';
+			}
+			bpfwpSchemaValues::render( $this->schema_class->fields, $entry['values'] ?? array(), $name . '[values]' );
+			echo '<input type="hidden" name="' . esc_attr( $name . '[complete]' ) . '" value="' . esc_attr( $this->form_signature() ) . '">';
+		}
+
+		/** Compatibility entry point; new forms use structured paths. */
+		public function display_field( $field, $post, $specified_values, $field_prefix = '', $count = 1 ) {
+
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-values.php';
+			$values = bpfwpSchemaValues::legacy( array( $field ), (array) $specified_values, $field_prefix, $count );
+			bpfwpSchemaValues::render( array( $field ), $values, 'bpfwp_rules[' . $this->post_id . '][values]' );
+			return 1;
+		}
+
+		public function save_meta( $post_id ) {
+			global $bpfwp_controller;
+			$nonce = 'bpfwp_rule_nonce_' . $this->post_id;
+			if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'edit_post', $post_id ) || ! isset( $_POST[ $nonce ] ) || ! is_string( $_POST[ $nonce ] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ $nonce ] ) ), 'bpfwp_rule_' . $this->post_id ) ) {
+				return $post_id;
+			}
+			$post = get_post( $post_id );
+			if ( ! $post || $post->post_type === $bpfwp_controller->cpts->schema_cpt_slug || ! is_post_type_viewable( $post->post_type ) || ! $this->validate_target( $post ) || ! isset( $_POST['bpfwp_rules'][ $this->post_id ] ) ) {
+				return $post_id;
+			}
+			$raw = wp_unslash( $_POST['bpfwp_rules'][ $this->post_id ] );
+			if ( ! is_array( $raw ) || ! isset( $raw['complete'] ) || ! is_string( $raw['complete'] ) || ! hash_equals( $this->form_signature(), $raw['complete'] ) ) {
+				if ( is_array( $raw ) && isset( $raw['values'] ) && is_array( $raw['values'] ) ) {
+					set_transient( 'bpfwp_schema_draft_' . get_current_user_id() . '_' . $post_id . '_' . $this->post_id, $raw['values'], DAY_IN_SECONDS );
+				}
+					set_transient( 'bpfwp_schema_error_' . get_current_user_id(), __( 'The schema form was incomplete, possibly because it exceeded the server input limit. No values for this rule were changed. Keep this editor open to recover your entries, reduce repeated items or ask your host to increase max_input_vars, then retry.', 'business-profile' ), 300 );
+				return $post_id;
+			}
+			if ( ! is_array( $raw ) || ! isset( $raw['signature'] ) || ! is_string( $raw['signature'] ) || ! hash_equals( $this->form_signature(), $raw['signature'] ) ) {
+				set_transient( 'bpfwp_schema_error_' . get_current_user_id(), __( 'The schema rule changed while this page was open. Reload before editing its values.', 'business-profile' ), 60 );
+				return $post_id;
+			}
+			if ( ! is_array( $raw ) || empty( $raw['present'] ) || ! isset( $raw['output'], $raw['values'] ) || ! in_array( $raw['output'], array( 'inherit', 'include', 'exclude' ), true ) ) {
+				return $post_id;
+			}
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-values.php';
+			$values = bpfwpSchemaValues::sanitize( $this->schema_class->fields, $raw['values'] );
+			if ( is_wp_error( $values ) ) {
+				set_transient( 'bpfwp_schema_error_' . get_current_user_id(), $values->get_error_message(), 60 );
+				return $post_id;
+			}
+			$entries                   = get_post_meta( $post_id, bpfwpSchemaValues::META, true );
+			$entries                   = is_array( $entries ) ? $entries : array();
+			$entries[ $this->post_id ] = array(
+				'output' => $raw['output'],
+				'values' => $values,
+			);
+			update_post_meta( $post_id, bpfwpSchemaValues::META, wp_slash( $entries ) );
 			return $post_id;
 		}
 
-		/**
-		 * Get the value of a particular field that has been sent via POST
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  bpfwpSchemaField $field The field to be displayed.
-		 * @param  int $count The number of times this field has been displayed.
-		 * @return mixed $field_value;
-		 */
-		private function get_field_save_value( $field_prefix, $field, $count = 1 ) {
-			global $values;
-
-			if ( $field->input == 'SchemaField' ) {
-				foreach ( $field->children as $field_child ) {
-					if ( $field->repeatable ) { $max_count = intval( $_POST['count_' . $this->schema_type][$field_prefix . $field->slug] ); }
-					else { $max_count = 1; }
-
-					for ( $i = 1; $i <= $max_count; $i++ ) {
-						$new_field_prefix = $field_prefix . $field->slug . '_';
-						$value[$new_field_prefix . $field_child->slug] = $this->get_field_save_value($new_field_prefix, $field_child, $i);
-					}
-				}
-			}
-			else {
-				$values[$field_prefix . $field->slug][$count] = sanitize_text_field( $_POST[$this->schema_type][$field_prefix . $field->slug][$count] );
-			}
-
-			return $value;
-		}
-
-		/**
-		 * Creates an output array based on this schema's class values
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  array $ld_json The ld+json data that will be output eventually.
-		 * @return array $ld_json;
-		 */
 		public function output_ld_json_data( $ld_json ) {
-			global $post;
-			// @to-do: THIS NEEDS TO BE CHANGED TO WORK WITH NON-POST OBJECTS
-			$values = get_post_meta( $post->ID, 'bpfwp_values_' . $this->schema_type, true );
-			$values = is_array( $values ) ? $values : array();
 
-			$output = array(); 
-
-			$output['@context'] = 'http://schema.org';
-			$output['@type'] = $this->schema_type;
-
-			foreach ( $this->schema_class->fields as $field ) {
-				$output[$field->slug] = $this->get_field_output_value($values, $field, 1);
+			if ( ! $this->public_context() || 'publish' !== get_post_status( $this->post_id ) ) {
+				return $ld_json;
 			}
-
+			$post = is_singular() ? get_queried_object() : null;
+			if ( ! $this->validate_target( $post ) ) {
+				return $ld_json;
+			}
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-values.php';
+			$id    = $post ? $post->ID : 0;
+			$entry = $id ? bpfwpSchemaValues::entry( $this, $id ) : array();
+			$state = $entry['output'] ?? 'inherit';
+			if ( 'exclude' === $state || ( 'inherit' === $state && get_post_meta( $this->post_id, 'bpfwp-rule-contract-version', true ) && ! $this->default_display ) ) {
+				return $ld_json;
+			}
+			// Content-specific catalogue types cannot describe an incidental archive-loop post.
+			if ( ! $id && in_array( $this->schema_type, array( 'Article', 'NewsArticle', 'BlogPosting', 'Product', 'Review' ), true ) ) {
+				return $ld_json;
+			}
+			$values = bpfwpSchemaValues::output( $this->schema_class->fields, $entry['values'] ?? array(), (array) $this->field_defaults, $id );
+			if ( ! $values ) {
+				return $ld_json;
+			}
+			$url       = $id ? get_permalink( $id ) : get_pagenum_link( max( 1, get_query_var( 'paged' ) ), false );
+			$output    = array_merge(
+				array(
+					'@context' => 'https://schema.org',
+					'@type'    => $this->schema_type,
+					'@id'      => $url . '#bpfwp-rule-' . $this->post_id,
+				),
+				$values
+			);
 			$ld_json[] = $output;
-
 			return $ld_json;
 		}
 
-		/**
-		 * Creates an output array based on this schema's class values
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @param  array $values The values that have been saved for this particular Schema CPT.
-		 * @param  bpfwpSchemaField $field The field that we're getting the value for.
-		 * @param  int $count Which iteration of this field are we retrieving.
-		 * @return mixed $value;
-		 */
 		public function get_field_output_value( $values, $field, $count = 1, $field_prefix = '' ) {
-			global $post;
 
-			$field->callback = ( isset($this->field_defaults[$field_prefix . '_' . $field->slug]) and $this->field_defaults[$field_prefix . '_' . $field->slug] != '' ) ? $this->field_defaults[$field_prefix . '_' . $field->slug] : $field->callback;
-
-			if ( $field->input == 'SchemaField' ) {
-				//$max_count = sizeOf($values[$field->slug]);
-				$max_count = 1;
-
-				$field_prefix .= '_' . $field->slug;
-
-				for ( $i = 1; $i <= $max_count; $i++ ) {
-
-					foreach ( $field->children as $field_child ) {
-
-						//$value[$field_child->slug][$i] = $this->get_field_output_value($values[$field->slug], $field_child, $i);
-						
-						$values[$field->slug] = isset( $values['_' . $field->slug] ) ? $values['_' . $field->slug] : array();
-						
-						$value[$field_child->slug] = $this->get_field_output_value( $values[$field->slug], $field_child, $i, $field_prefix );
-					}
-				}
-			}
-			else {
-				$user_value = isset( $values['_' . $field->slug] ) ? $values['_' . $field->slug] : '';
-
-				if ( is_array( $user_value) ) { $user_value = $user_value[$count]; }
-
-				if ( ! $user_value ) { $default_value = $field->get_default_value( $post->ID, 'post' ); }
-
-				$value = $user_value ? $user_value : ( $default_value ? $default_value : '' );
-			}
-
-			return $value;
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-values.php';
+				$post = is_singular() ? get_queried_object() : null;
+				$tree = bpfwpSchemaValues::legacy( array( $field ), (array) $values, $field_prefix, $count );
+			$output   = bpfwpSchemaValues::output( array( $field ), $tree, (array) $this->field_defaults, $post ? $post->ID : 0, $field_prefix );
+			return $output[ $field->slug ] ?? '';
 		}
 	}
 endif;

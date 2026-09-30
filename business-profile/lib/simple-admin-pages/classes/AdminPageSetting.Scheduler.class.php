@@ -22,31 +22,31 @@ class sapAdminPageSettingScheduler_2_6_19 extends sapAdminPageSetting_2_6_19 {
 		'pickadate' => array(
 			'path'			=> 'lib/pickadate/picker.js',
 			'dependencies'	=> array( 'jquery' ),
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'footer'		=> true,
 		),
 		'pickadate-date' => array(
 			'path'			=> 'lib/pickadate/picker.date.js',
 			'dependencies'	=> array( 'jquery' ),
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'footer'		=> true,
 		),
 		'pickadate-time' => array(
 			'path'			=> 'lib/pickadate/picker.time.js',
 			'dependencies'	=> array( 'jquery' ),
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'footer'		=> true,
 		),
 		'pickadate-legacy' => array(
 			'path'			=> 'lib/pickadate/legacy.js',
 			'dependencies'	=> array( 'jquery' ),
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'footer'		=> true,
 		),
 		'sap-scheduler' => array(
 			'path'			=> 'js/scheduler.js',
 			'dependencies'	=> array( 'jquery' ),
-			'version'		=> SAP_VERSION,
+			'version'      => '2.6.19-bpfwp-2.4.0.1',
 			'footer'		=> true,
 		),
 		// @todo there should be some way to load alternate language .js files
@@ -61,19 +61,19 @@ class sapAdminPageSettingScheduler_2_6_19 extends sapAdminPageSetting_2_6_19 {
 		'pickadate-default' => array(
 			'path'			=> 'lib/pickadate/themes/default.css',
 			'dependencies'	=> '',
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'media'			=> null,
 		),
 		'pickadate-date' => array(
 			'path'			=> 'lib/pickadate/themes/default.date.css',
 			'dependencies'	=> '',
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'media'			=> null,
 		),
 		'pickadate-time' => array(
 			'path'			=> 'lib/pickadate/themes/default.time.css',
 			'dependencies'	=> '',
-			'version'		=> '3.6.1',
+			'version'      => '3.6.1',
 			'media'			=> null,
 		),
 	);
@@ -206,42 +206,42 @@ class sapAdminPageSettingScheduler_2_6_19 extends sapAdminPageSetting_2_6_19 {
 
 		foreach ( $val as $i => $rule ) {
 
-			if ( !empty( $rule['weekdays'] ) ) {
-				$value[$i]['weekdays'] = array();
+			if ( ! empty( $rule['weekdays'] ) ) {
+				$value[ $i ]['weekdays'] = array();
 				foreach ( $rule['weekdays'] as $day => $flag ) {
-					if ( $flag !== '1' ) {
+					if ( ! in_array( $flag, array( '1', 1, true ), true ) ) {
 						continue;
 					}
 
-					$value[$i]['weekdays'][$day] = $flag;
+					$value[ $i ]['weekdays'][ $day ] = $flag;
 				}
 			}
 
-			if ( !empty( $rule['weeks'] ) ) {
-				$value[$i]['weeks'] = array();
+			if ( ! empty( $rule['weeks'] ) ) {
+				$value[ $i ]['weeks'] = array();
 				foreach ( $rule['weeks'] as $week => $flag ) {
-					if ( $flag !== '1' ) {
+					if ( ! in_array( $flag, array( '1', 1, true ), true ) ) {
 						continue;
 					}
 
-					$value[$i]['weeks'][$week] = $flag;
+					$value[ $i ]['weeks'][ $week ] = $flag;
 				}
 			}
 
-			if ( !empty( $rule['date'] ) ) {
-				$value[$i]['date'] = esc_attr( $rule['date'] );
+			if ( ! empty( $rule['date'] ) ) {
+				$value[ $i ]['date'] = esc_attr( $rule['date'] );
 			}
 
-			if ( !empty( $rule['date_range'] ) ) {
-				$value[$i]['date_range']['start'] = esc_attr( $rule['date_range']['start'] );
-				$value[$i]['date_range']['end'] = esc_attr( $rule['date_range']['end'] );
+			if ( ! empty( $rule['date_range'] ) ) {
+				$value[ $i ]['date_range']['start'] = esc_attr( $rule['date_range']['start'] ?? '' );
+				$value[ $i ]['date_range']['end']   = esc_attr( $rule['date_range']['end'] ?? '' );
 			}
 
-			if ( !empty( $rule['time']['start'] ) ) {
-				$value[$i]['time']['start'] = esc_attr( $rule['time']['start'] );
+			if ( ! empty( $rule['time']['start'] ) ) {
+				$value[ $i ]['time']['start'] = esc_attr( $rule['time']['start'] );
 			}
-			if ( !empty( $rule['time']['end'] ) ) {
-				$value[$i]['time']['end'] = esc_attr( $rule['time']['end'] );
+			if ( ! empty( $rule['time']['end'] ) ) {
+				$value[ $i ]['time']['end'] = esc_attr( $rule['time']['end'] );
 			}
 		}
 
@@ -734,40 +734,40 @@ class sapAdminPageSettingScheduler_2_6_19 extends sapAdminPageSetting_2_6_19 {
 
 		$output = array();
 
-		if ( !is_array( $values ) || !count( $values ) ) {
+		if ( ! is_array( $values ) || ! count( $values ) ) {
 			return $output;
 		}
 
 		foreach ( $values as $i => $rule ) {
 
-			if ( !empty( $rule['weekdays'] ) ) {
-				$output[$i]['weekdays'] = array();
+			if ( ! empty( $rule['weekdays'] ) ) {
+				$output[ $i ]['weekdays'] = array();
 				foreach ( $rule['weekdays'] as $day => $flag ) {
-					if ( $flag !== '1' ||
+					if ( ! in_array( $flag, array( '1', 1, true ), true ) ||
 							( $day !== 'monday' && $day !== 'tuesday' && $day !== 'wednesday' && $day !== 'thursday' && $day !== 'friday' && $day !== 'saturday' && $day !== 'sunday' ) ) {
 						continue;
 					}
 
-					$output[$i]['weekdays'][$day] = $flag;
+					$output[ $i ]['weekdays'][ $day ] = $flag;
 				}
 			}
 
-			if ( !empty( $rule['weeks'] ) ) {
-				$output[$i]['weeks'] = array();
+			if ( ! empty( $rule['weeks'] ) ) {
+				$output[ $i ]['weeks'] = array();
 				foreach ( $rule['weeks'] as $week => $flag ) {
-					if ( $flag !== '1' ||
+					if ( ! in_array( $flag, array( '1', 1, true ), true ) ||
 							( $week !== 'first' && $week !== 'second' && $week !== 'third' && $week !== 'fourth' && $week !== 'last' ) ) {
 						continue;
 					}
 
-					$output[$i]['weeks'][$week] = $flag;
+					$output[ $i ]['weeks'][ $week ] = $flag;
 				}
 			}
 
-			if ( !empty( $rule['date'] ) ) {
-				$date = new DateTime( $rule['date'] );
-				if ( checkdate( $date->format( 'n' ), $date->format( 'j' ), $date->format( 'Y' ) ) ) {
-					$output[$i]['date'] = call_user_func( $this->sanitize_callback, $rule['date'] );
+			if ( ! empty( $rule['date'] ) ) {
+				$valid_date = is_string( $rule['date'] ) && preg_match( '#^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$#D', $rule['date'], $parts ) && checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] );
+				if ( $valid_date ) {
+					$output[ $i ]['date'] = call_user_func( $this->sanitize_callback, $rule['date'] );
 				}
 			}
 
@@ -778,32 +778,30 @@ class sapAdminPageSettingScheduler_2_6_19 extends sapAdminPageSetting_2_6_19 {
 				&&
 				! ( empty( $rule['date_range']['start'] ) && empty( $rule['date_range']['end'] ) )
 			) {
-				if( ! empty( $rule['date_range']['start'] ) ) {
-					$date = new DateTime( $rule['date_range']['start'] );
-					if( checkdate( $date->format( 'n' ), $date->format( 'j' ), $date->format( 'Y' ) ) ) {
-						$output[$i]['date_range']['start'] = call_user_func( $this->sanitize_callback, $rule['date_range']['start'] );
+				if ( ! empty( $rule['date_range']['start'] ) ) {
+					$valid_date = is_string( $rule['date_range']['start'] ) && preg_match( '#^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$#D', $rule['date_range']['start'], $parts ) && checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] );
+					if ( $valid_date ) {
+						$output[ $i ]['date_range']['start'] = call_user_func( $this->sanitize_callback, $rule['date_range']['start'] );
 					}
-				}
-				else {
-					$output[$i]['date_range']['start'] = '';
+				} else {
+					$output[ $i ]['date_range']['start'] = '';
 				}
 
-				if( ! empty( $rule['date_range']['end'] ) ) {
-					$date = new DateTime( $rule['date_range']['end'] );
-					if( checkdate( $date->format( 'n' ), $date->format( 'j' ), $date->format( 'Y' ) ) ) {
-						$output[$i]['date_range']['end'] = call_user_func( $this->sanitize_callback, $rule['date_range']['end'] );
+				if ( ! empty( $rule['date_range']['end'] ) ) {
+					$valid_date = is_string( $rule['date_range']['end'] ) && preg_match( '#^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$#D', $rule['date_range']['end'], $parts ) && checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] );
+					if ( $valid_date ) {
+						$output[ $i ]['date_range']['end'] = call_user_func( $this->sanitize_callback, $rule['date_range']['end'] );
 					}
-				}
-				else {
-					$output[$i]['date_range']['end'] = '';
+				} else {
+					$output[ $i ]['date_range']['end'] = '';
 				}
 			}
 
-			if ( !empty( $rule['time']['start'] ) ) {
-				$output[$i]['time']['start'] = call_user_func( $this->sanitize_callback, $rule['time']['start'] );
+			if ( ! empty( $rule['time']['start'] ) ) {
+				$output[ $i ]['time']['start'] = call_user_func( $this->sanitize_callback, $rule['time']['start'] );
 			}
-			if ( !empty( $rule['time']['end'] ) ) {
-				$output[$i]['time']['end'] = call_user_func( $this->sanitize_callback, $rule['time']['end'] );
+			if ( ! empty( $rule['time']['end'] ) ) {
+				$output[ $i ]['time']['end'] = call_user_func( $this->sanitize_callback, $rule['time']['end'] );
 			}
 		}
 

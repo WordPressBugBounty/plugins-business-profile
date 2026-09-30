@@ -126,7 +126,9 @@ class sapAdminPage_2_6_19 {
 	 */
 	public function sanitize_callback( $value ) {
 
-		if ( empty( $_POST['_wp_http_referer'] ) ) {
+		// Only sanitize this page's Settings API submission. Other writers validate
+		// their own fields and must not be mistaken for the default settings tab.
+		if ( empty( $_POST['_wp_http_referer'] ) || ( $_POST['option_page'] ?? '' ) !== $this->id ) {
 			return $value;
 		}
 

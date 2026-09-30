@@ -10,7 +10,7 @@ jQuery(document).ready(function ($) {
   $('.sap-parent-form').on('submit', function (ev) {
     var _form = $(this), ignore;
 
-    $('.sap-ordering-table').each( function() {
+    _form.find('.sap-ordering-table').each( function() {
 
       var main_input = $(this).find('#sap-ordering-table-main-input');
 
@@ -21,12 +21,12 @@ jQuery(document).ready(function ($) {
         $(tr).find('td').each((idx_td, td) => {
           let elm = $(td).find('input');
   
-          main_input_val[elm.val()] = $(td).find('span').html();
+          main_input_val[elm.val()] = $(td).find('span').text();
         });
   
       });
 
-      if ( main_input_val.length ) { main_input.val( JSON.stringify( main_input_val ) ); }
+      if ( Object.keys( main_input_val ).length ) { main_input.val( JSON.stringify( main_input_val ) ); }
     });
   });
 

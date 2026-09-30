@@ -19,35 +19,46 @@ var bpfwp_map = bpfwp_map || {};
 function bpInitializeMap() {
 	'use strict';
 
-	bpfwp_map.maps = [];
-	bpfwp_map.info_windows = [];
+	bpfwp_map.maps = bpfwp_map.maps || {};
+	bpfwp_map.info_windows = bpfwp_map.info_windows || {};
 
 	jQuery( '.bp-map' ).each( function() {
 		var id = jQuery( this ).attr( 'id' );
 		var data = jQuery( this ).data();
+		if (data.bpfwpInitialized) { return; }
+		if (bpfwp_map.lazy_ready && !data.bpfwpVisible) { return; }
+		jQuery(this).data('bpfwpInitialized', true);
+		data.address = String(data.address || '');
 
 		data.addressURI = encodeURIComponent( data.address.replace( /(<([^>]+)>)/ig, ', ' ) );
 
 		// Google Maps API v3
-		if ( 'undefined' !== typeof data.lat ) {
+		if ( 'undefined' !== typeof google && google.maps && Number.isFinite(Number(data.lat)) && Number.isFinite(Number(data.lon)) ) {
 			data.addressURI              = encodeURIComponent( data.address.replace( /(<([^>]+)>)/ig, ', ' ) );
-			bpfwp_map.map_options        = bpfwp_map.map_options || {};
-			bpfwp_map.map_options.center = new google.maps.LatLng( data.lat, data.lon );
-			if ( typeof bpfwp_map.map_options.zoom === 'undefined' ) {
-				bpfwp_map.map_options.zoom = bpfwp_map.map_options.zoom || 15;
+			var options = Object.assign({}, bpfwp_map.map_options || {});
+			options.center = new google.maps.LatLng( data.lat, data.lon );
+			if ( typeof options.zoom === 'undefined' ) {
+				options.zoom = 15;
 			}
-			bpfwp_map.maps[ id ] = new google.maps.Map( document.getElementById( id ), bpfwp_map.map_options );
+			bpfwp_map.maps[ id ] = new google.maps.Map( document.getElementById( id ), options );
 
-			var content = '<div class="bp-map-info-window">' + '<p><strong>' + data.name + '</strong></p>' + '<p>' + data.address.replace( /(?:\r\n|\r|\n)/g, '<br>' ) + '</p>';
+			var content = document.createElement('div');
+			content.className = 'bp-map-info-window';
+			[String(data.name || ''), data.address, String(data.phone || '')].forEach(function (text) {
+				var paragraph = document.createElement('p');
+				paragraph.textContent = text;
+				content.appendChild(paragraph);
+			});
 
-			if ( 'undefined' !== typeof data.phone ) {
-				content += '<p>' + data.phone + '</p>';
-			}
-
-			content += '<p><a target="_blank" href="//maps.google.com/maps?saddr=current+location&daddr=' + data.addressURI + '">' + bpfwp_map.strings.getDirections + '</a></p>' + '</div>';
+			var link = document.createElement('a');
+			link.target = '_blank';
+			link.rel = 'noopener noreferrer';
+			link.href = 'https://maps.google.com/maps?saddr=current+location&daddr=' + data.addressURI;
+			link.textContent = bpfwp_map.strings.getDirections;
+			content.appendChild(link);
 
 			bpfwp_map.info_windows[ id ] = new google.maps.InfoWindow({
-				position: bpfwp_map.map_options.center,
+				position: options.center,
 				content: content
 			});
 			bpfwp_map.info_windows[ id ].open( bpfwp_map.maps[ id ] );
@@ -60,6 +71,8 @@ function bpInitializeMap() {
 			var bpMapIframe = document.createElement( 'iframe' );
 
 			bpMapIframe.frameBorder = 0;
+			bpMapIframe.title = String(data.name || data.address);
+			bpMapIframe.loading = 'lazy';
 			bpMapIframe.style.width = '100%';
 			bpMapIframe.style.height = '100%';
 
@@ -94,14 +107,26 @@ jQuery( document ).ready( function() {
 	if ( ! bpfwp_map.autoload_google_maps ) {
 		return;
 	}
+	if (!document.querySelector('.bp-map')) { return; }
+	function loadMaps() {
 	// Load Google Maps API and initialize maps.
 	if ( 'undefined' === typeof google || 'undefined' === typeof google.maps ) {
+		if (bpfwp_map.loading) { return; }
+		bpfwp_map.loading = true;
 		var bpMapScript = document.createElement( 'script' );
 		bpMapScript.type = 'text/javascript';
+		bpMapScript.onerror = function () {
+			bpfwp_map.loading = false;
+			jQuery('.bp-map').each(function () {
+				if (!jQuery(this).data('bpfwpInitialized')) {
+					jQuery(this).text(bpfwp_map.strings.loadError).attr('role', 'status');
+				}
+			});
+		};
 		bpMapScript.src = '//maps.googleapis.com/maps/api/js?v=3.exp&callback=bp_initialize_map&loading=async';
 
 		if ( 'undefined' !== typeof bpfwp_map.google_maps_api_key ) {
-			bpMapScript.src += '&key=' + bpfwp_map.google_maps_api_key;
+			bpMapScript.src += '&key=' + encodeURIComponent(bpfwp_map.google_maps_api_key);
 		}
 
 		document.body.appendChild( bpMapScript );
@@ -110,4 +135,17 @@ jQuery( document ).ready( function() {
 		// just initialize the map.
 		bp_initialize_map();
 	}
+	}
+	if ('IntersectionObserver' in window) {
+		bpfwp_map.lazy_ready = true;
+		var observer = new IntersectionObserver(function (entries) {
+			entries.forEach(function (entry) {
+				if (!entry.isIntersecting) { return; }
+				jQuery(entry.target).data('bpfwpVisible', true);
+				observer.unobserve(entry.target);
+				loadMaps();
+			});
+		}, { rootMargin: '200px' });
+		document.querySelectorAll('.bp-map').forEach(function (map) { observer.observe(map); });
+	} else { loadMaps(); }
 });
