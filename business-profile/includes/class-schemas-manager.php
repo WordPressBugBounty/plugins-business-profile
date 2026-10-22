@@ -132,6 +132,9 @@ if ( ! class_exists( 'bpfwpSchemasManager' ) ) :
 			);
 
 			foreach ( $schema_cpt_posts as $schema_post ) {
+				if ( ! bpfwpSchemaRuleOwnership::allowed( $schema_post->ID ) ) {
+					continue;
+				}
 				$schema_data = get_post_meta( $schema_post->ID, 'bpfwp-schema-data', true );
 
 				$schema_target_type  = isset( $schema_data['schema_target_type'] ) ? $schema_data['schema_target_type'] : '';

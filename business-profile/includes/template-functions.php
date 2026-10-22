@@ -90,6 +90,10 @@ if ( ! function_exists( 'bpwfwp_print_contact_card' ) ) {
 		global $bpfwp_controller;
 
 		$previous_display = $bpfwp_controller->display_settings;
+		$read_scope       = class_exists( 'fspphBPFWPEntitlementStore' ) && method_exists( 'fspphBPFWPEntitlementStore', 'begin_read' );
+		if ( $read_scope ) {
+			fspphBPFWPEntitlementStore::begin_read();
+		}
 		try {
 			// Define shortcode attributes.
 			$bpfwp_controller->display_settings = shortcode_atts(
@@ -145,6 +149,9 @@ if ( ! function_exists( 'bpwfwp_print_contact_card' ) ) {
 			return apply_filters( 'bpwfwp_contact_card_output', $output );
 		} finally {
 			$bpfwp_controller->display_settings = $previous_display;
+			if ( $read_scope ) {
+				fspphBPFWPEntitlementStore::end_read();
+			}
 		}
 	}
 
@@ -201,6 +208,9 @@ if ( ! function_exists( 'bpfwp_print_custom_fields' ) ) {
 	 */
 	function bpfwp_print_custom_fields( $location = false ) {
 		global $bpfwp_controller;
+		if ( ! bpfwpPremiumCapabilities::allowed( 'custom_fields' ) ) {
+			return array();
+		}
 
 		$return_data = array();
 
@@ -209,10 +219,12 @@ if ( ! function_exists( 'bpfwp_print_custom_fields' ) ) {
 		$custom_field_values = bpfwp_setting( 'custom_field_values', $location );
 
 		if ( bpfwp_get_display( 'show_custom_fields' ) && ! empty( $custom_fields ) ) :
-		?>
+			?>
 			<div class="bp-custom-fields">
 				
-				<?php foreach ( $custom_fields as $custom_field ) { ?>
+				<?php
+				foreach ( $custom_fields as $custom_field ) {
+					?>
 
 					<div class="bp-custom-field">
 
@@ -226,15 +238,21 @@ if ( ! function_exists( 'bpfwp_print_custom_fields' ) ) {
 
 						<div class='bp-custom-field-value' id='bp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>'>
 
-							<?php if ( $custom_field->type == 'file' ) { ?>
+							<?php
+							if ( $custom_field->type == 'file' ) {
+								?>
 							
 								<a href='<?php echo esc_attr( $field_value ); ?>' download> 
 									<?php echo ! empty( $field_value ) ? esc_html( basename( $field_value ) ) : ''; ?>
 								</a>
 
-							<?php } elseif ( $custom_field->type == 'link' ) { ?>
+								<?php
+							} elseif ( $custom_field->type == 'link' ) {
+								?>
 
-								<?php if ( $field_value != '' ) { ?>
+								<?php
+								if ( $field_value != '' ) {
+									?>
 							
 									<a href='<?php echo esc_attr( $field_value ); ?>' > 
 										<?php echo esc_html( $field_value ); ?>
@@ -242,7 +260,9 @@ if ( ! function_exists( 'bpfwp_print_custom_fields' ) ) {
 
 								<?php } ?>
 		
-							<?php } else { ?>
+								<?php
+							} else {
+								?>
 								
 								<?php echo esc_html( $field_value ); ?>
 
@@ -597,17 +617,8 @@ if ( ! function_exists( 'bpwfwp_print_opening_hours' ) ) {
 
 		// Get the opening hours in a returnable format
 		require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
-		$schedule = bpfwpBusinessHours::normalize( $hours, array() );
-		$hours    = array();
-		foreach ( bpfwpBusinessHours::weekdays() as $index => $day ) {
-			foreach ( bpfwpBusinessHours::for_date( $schedule, bpfwpBusinessHours::shift_date( '2000-01-03', $index ) ) as $interval ) {
-				$row = array( 'weekdays' => array( $day => 1 ) );
-				if ( array( 0, 1440 ) !== $interval ) {
-					$row['time'] = bpfwpBusinessHours::display_time( $schedule, $day, $interval );
-				}
-				$hours[] = $row;
-			}
-		}
+		$schedule    = bpfwpBusinessHours::normalize( $hours, array() );
+		$hours       = bpfwpBusinessHours::weekly_display_rows( $schedule );
 		$return_data = array( 'openingHoursSpecification' => bpfwpBusinessHours::weekly_schema( $schedule ) );
 
 		if ( ! bpfwp_get_display( 'show_opening_hours' ) ) {
@@ -813,13 +824,14 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 		$exceptions   = null === $explicit && $legacy_local ? get_post_meta( $location, 'exceptions', true ) : bpfwp_setting( 'exceptions', $location );
 		$schedule     = bpfwpBusinessHours::normalize( bpfwp_setting( 'opening-hours', $location ), $exceptions );
 		$records      = bpfwpBusinessHours::exception_schema( $schedule );
-		if ( ! $records || ! bpfwp_get_display( 'show_opening_hours' ) ) {
+		$display      = bpfwpBusinessHours::dated_display_rows( $schedule );
+		if ( ! $display || ! bpfwp_get_display( 'show_opening_hours' ) ) {
 			return '';
 		}
 		$timezone = wp_timezone();
 		$today    = ( new DateTimeImmutable( 'now', $timezone ) )->format( 'Y-m-d' );
 		echo '<div class="bp-opening-hours special"><span class="bp-title">' . esc_html( $bpfwp_controller->settings->get_setting( 'label-special-opening-hours' ) ) . '</span>';
-		foreach ( $records as $record ) {
+		foreach ( $display as $record ) {
 			if ( isset( $record['validThrough'] ) && $record['validThrough'] < $today ) {
 				continue;
 			}
@@ -827,13 +839,13 @@ if ( ! function_exists( 'bpwfwp_print_exceptions' ) ) {
 			$to   = isset( $record['validThrough'] ) ? wp_date( get_option( 'date_format' ), ( new DateTimeImmutable( $record['validThrough'], $timezone ) )->getTimestamp(), $timezone ) : __( 'No end date', 'business-profile' );
 			/* translators: 1: Start date, 2: End date. */
 			$label = $from === $to ? $from : sprintf( __( '%1$s to %2$s', 'business-profile' ), $from, $to );
-			if ( '00:00' === $record['opens'] && '00:00' === $record['closes'] ) {
+			if ( $record['closed'] ) {
 				$time = $bpfwp_controller->settings->get_setting( 'label-closed' );
 			} else {
 				$start = new DateTimeImmutable( '2000-01-01 ' . $record['opens'], $timezone );
 				$end   = new DateTimeImmutable( '2000-01-01 ' . $record['closes'], $timezone );
 				$time  = wp_date( get_option( 'time_format' ), $start->getTimestamp(), $timezone ) . ' - ' . wp_date( get_option( 'time_format' ), $end->getTimestamp(), $timezone );
-				if ( $record['closes'] < $record['opens'] ) {
+				if ( $record['overnight'] ) {
 					$time .= ' ' . __( '(next day)', 'business-profile' );
 				}
 			}
@@ -1088,22 +1100,51 @@ if ( ! function_exists( 'bpfwp_add_custom_styling' ) ) {
 	 * @since  2.3.4
 	 */
 	function bpfwp_add_custom_styling() {
+		if ( ! bpfwpPremiumCapabilities::allowed( 'styling' ) ) {
+			return;
+		}
 		global $bpfwp_controller;
 		$styling = '<style>';
-			if ( $bpfwp_controller->settings->get_setting( 'styling-map-width') != '' ) { $styling .=  '.bp-map { width: ' . $bpfwp_controller->settings->get_setting( 'styling-map-width' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-disable-icons') ) { $styling .=  '.bp-contact-card > div:before, .bp-title:before { display: none !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-main-font-family') != '' ) { $styling .=  '.bp-contact-card, .bp-contact-card a { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-main-font-family' ) . '\' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-main-font-size') != '' ) { $styling .=  '.bp-contact-card, .bp-contact-card a { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-main-font-size' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-main-text-color') != '' ) { $styling .=  '.bp-contact-card { color: ' . $bpfwp_controller->settings->get_setting( 'styling-main-text-color' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-name-font-family') != '' ) { $styling .=  '.bp-name { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-name-font-family' ) . '\' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-name-font-size') != '' ) { $styling .=  '.bp-name { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-name-font-size' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-name-text-color') != '' ) { $styling .=  '.bp-name { color: ' . $bpfwp_controller->settings->get_setting( 'styling-name-text-color' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-heading-font-family') != '' ) { $styling .=  '.bp-title { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-heading-font-family' ) . '\' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-heading-font-size') != '' ) { $styling .=  '.bp-title { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-heading-font-size' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-heading-text-color') != '' ) { $styling .=  '.bp-title { color: ' . $bpfwp_controller->settings->get_setting( 'styling-heading-text-color' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-link-color') != '' ) { $styling .=  '.bp-contact-card a { color: ' . $bpfwp_controller->settings->get_setting( 'styling-link-color' ) . ' !important; }'; }
-			if ( $bpfwp_controller->settings->get_setting( 'styling-link-hover-color') != '' ) { $styling .=  '.bp-contact-card a:hover { color: ' . $bpfwp_controller->settings->get_setting( 'styling-link-hover-color' ) . ' !important; }'; }
-		$styling .=   '</style>';
+		if ( $bpfwp_controller->settings->get_setting( 'styling-map-width' ) != '' ) {
+			$styling .= '.bp-map { width: ' . $bpfwp_controller->settings->get_setting( 'styling-map-width' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-disable-icons' ) ) {
+			$styling .= '.bp-contact-card > div:before, .bp-title:before { display: none !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-main-font-family' ) != '' ) {
+			$styling .= '.bp-contact-card, .bp-contact-card a { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-main-font-family' ) . '\' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-main-font-size' ) != '' ) {
+			$styling .= '.bp-contact-card, .bp-contact-card a { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-main-font-size' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-main-text-color' ) != '' ) {
+			$styling .= '.bp-contact-card { color: ' . $bpfwp_controller->settings->get_setting( 'styling-main-text-color' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-name-font-family' ) != '' ) {
+			$styling .= '.bp-name { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-name-font-family' ) . '\' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-name-font-size' ) != '' ) {
+			$styling .= '.bp-name { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-name-font-size' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-name-text-color' ) != '' ) {
+			$styling .= '.bp-name { color: ' . $bpfwp_controller->settings->get_setting( 'styling-name-text-color' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-heading-font-family' ) != '' ) {
+			$styling .= '.bp-title { font-family: \'' . $bpfwp_controller->settings->get_setting( 'styling-heading-font-family' ) . '\' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-heading-font-size' ) != '' ) {
+			$styling .= '.bp-title { font-size: ' . $bpfwp_controller->settings->get_setting( 'styling-heading-font-size' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-heading-text-color' ) != '' ) {
+			$styling .= '.bp-title { color: ' . $bpfwp_controller->settings->get_setting( 'styling-heading-text-color' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-link-color' ) != '' ) {
+			$styling .= '.bp-contact-card a { color: ' . $bpfwp_controller->settings->get_setting( 'styling-link-color' ) . ' !important; }';
+		}
+		if ( $bpfwp_controller->settings->get_setting( 'styling-link-hover-color' ) != '' ) {
+			$styling .= '.bp-contact-card a:hover { color: ' . $bpfwp_controller->settings->get_setting( 'styling-link-hover-color' ) . ' !important; }';
+		}
+		$styling .= '</style>';
 		return $styling;
 	}
 }

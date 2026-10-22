@@ -8,7 +8,20 @@
 		if (confirmed && options.data && options.data.meta && Object.prototype.hasOwnProperty.call(options.data.meta, 'bpfwp-location-purpose')) {
 			options = Object.assign({}, options, {data: Object.assign({}, options.data, {bpfwp_confirm_public: true})});
 		}
-		return next(options);
+		const savingHours = options.body && typeof options.body.get === 'function' && options.body.get('bpfwp-hours-fingerprint');
+		if (!savingHours) { return next(options); }
+		return next(options).then(async response => {
+			const receipt = await response.clone().json();
+			if (!receipt.success || !receipt.data || !/^[a-f0-9]{64}$/.test(receipt.data.fingerprint)) {
+				throw new Error((receipt.data || {}).message || __('Hours could not be verified. Reload before retrying.', 'business-profile'));
+			}
+			document.querySelectorAll('[name="bpfwp-hours-fingerprint"]').forEach(input => { input.value = receipt.data.fingerprint; });
+			wp.data.dispatch('core/notices').removeNotice('bpfwp-hours-save');
+			return response;
+		}).catch(error => {
+			wp.data.dispatch('core/notices').createErrorNotice(error.message || __('Hours were not saved. Reload before retrying.', 'business-profile'), {id: 'bpfwp-hours-save', isDismissible: false});
+			throw error;
+		});
 	});
 	function PurposePanel() {
 		const meta = wp.data.useSelect(select => select('core/editor').getEditedPostAttribute('meta') || {}, []);

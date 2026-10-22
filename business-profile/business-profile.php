@@ -3,7 +3,7 @@
  * Plugin Name: Five Star Business Profile and Schema
  * Plugin URI:  https://www.fivestarplugins.com/plugins/business-profile/
  * Description: Add structured data to any page or post type. Create an SEO friendly contact card with your business info and associated schema. Supports Google Maps, opening hours and more.
- * Version:     2.4.0
+ * Version:     2.5.0
  * Author:      Five Star Plugins
  * Author URI:  https://www.fivestarplugins.com
  * License: GPLv3
@@ -56,6 +56,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 
 			// Add the admin menu
 			add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
+			add_action( 'admin_menu', array( $this, 'remove_empty_menu' ), PHP_INT_MAX );
 
 			// Add a link to the Google Rich Results Test Page for front-end pages
 			add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 100 );
@@ -71,6 +72,20 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 				'dashicons-businessperson',
 				51
 			);
+		}
+
+		/** Keep independently authorized extension entries, but remove an empty parent. */
+		public function remove_empty_menu() {
+			if ( current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			global $submenu;
+			foreach ( $submenu['bpfwp-business-profile'] ?? array() as $entry ) {
+				if ( isset( $entry[1] ) && current_user_can( $entry[1] ) ) {
+					return;
+				}
+			}
+			remove_menu_page( 'bpfwp-business-profile' );
 		}
 
 		/**
@@ -107,7 +122,7 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			define( 'BPFWP_PLUGIN_DIR', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 			define( 'BPFWP_PLUGIN_FNAME', plugin_basename( __FILE__ ) );
-			define( 'BPFWP_VERSION', '2.4.0' );
+			define( 'BPFWP_VERSION', '2.5.0' );
 		}
 
 		/**
@@ -131,6 +146,8 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-installation-walkthrough.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-integrations.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-permissions.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-premium-capabilities.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-premium-helper-compatibility.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-review-ask.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-schemas-manager.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/schemas/class-schema.php';
@@ -139,6 +156,9 @@ if ( ! class_exists( 'bpfwpInit', false ) ) :
 			add_action( 'wp_footer', array( 'bpfwpBusinessData', 'output_entities' ), 100 );
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-business-hours.php';
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-settings-mutation.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-location-hours-mutation.php';
+			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-rule-ownership.php';
+			bpfwpSchemaRuleOwnership::init();
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-publication-checks.php';
 			bpfwpPublicationChecks::init();
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-admin-selector.php';

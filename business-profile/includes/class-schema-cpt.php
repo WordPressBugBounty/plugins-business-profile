@@ -310,6 +310,9 @@ if ( ! class_exists( 'bpfwpSchemaCPT' ) ) :
 		}
 
 		public function output_ld_json_data( $ld_json ) {
+			if ( ! bpfwpSchemaRuleOwnership::allowed( $this->post_id ) ) {
+				return $ld_json;
+			}
 
 			if ( ! $this->public_context() || 'publish' !== get_post_status( $this->post_id ) ) {
 				return $ld_json;

@@ -16,7 +16,32 @@ class bpfwpDashboard {
 		add_action( 'admin_menu', array( $this, 'add_dashboard_to_menu' ), 99 );
 
 		add_action( 'admin_enqueue_scripts',  array( $this, 'enqueue_scripts' ) );
+			add_action( 'admin_init', array( $this, 'guard_license_form' ), 0 );
+			add_action( 'admin_notices', array( $this, 'license_form_notice' ) );
 	}
+		public function guard_license_form() {
+			if ( ! isset( $_POST['fsp_upgrade_to_full'] ) || ! is_string( $_POST['plugin_name'] ?? null ) || 'BPFWP' !== strtoupper( sanitize_key( wp_unslash( $_POST['plugin_name'] ) ) ) || bpfwpPremiumHelperCompatibility::compatible() ) {
+				return;
+			}
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'Access denied.', 'business-profile' ), '', array( 'response' => 403 ) );
+			}
+			check_admin_referer( 'fspph_upgrade', 'fspph_upgrade_nonce' );
+			delete_transient( 'fspph_upgrade_message_' . get_current_user_id() );
+			set_transient( 'bpfwp-license-message-' . get_current_user_id(), __( 'Update FSP Premium Helper to a compatible Business Profile build, then submit your key again. Premium activation has not been confirmed.', 'business-profile' ), MINUTE_IN_SECONDS );
+			wp_safe_redirect( admin_url( 'admin.php?page=bpfwp-dashboard' ) );
+			exit;
+		}
+		public function license_form_notice() {
+			if ( 'bpfwp-dashboard' !== ( $_GET['page'] ?? null ) || ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$message = get_transient( 'bpfwp-license-message-' . get_current_user_id() );
+			if ( is_string( $message ) && '' !== $message ) {
+				delete_transient( 'bpfwp-license-message-' . get_current_user_id() );
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+			}
+		}
 
 	public function add_dashboard_to_menu() {
 		global $menu, $submenu;
@@ -56,29 +81,37 @@ class bpfwpDashboard {
 		}
 	}
 
-	// Enqueues the admin script so that our hacky sub-menu opening function can run
-	public function enqueue_scripts() {
-		$currentScreen = get_current_screen();
-		if ( $currentScreen->id == 'business-profile_page_bpfwp-dashboard' ) {
-			wp_enqueue_style( 'bpfwp-admin', BPFWP_PLUGIN_URL . '/assets/css/admin.css', array(), BPFWP_VERSION );
-			wp_enqueue_script( 'bpfwp-admin-js', BPFWP_PLUGIN_URL . '/assets/js/admin.js', array( 'jquery' ), BPFWP_VERSION, true );
+		// Enqueues the admin script so that our hacky sub-menu opening function can run
+		public function enqueue_scripts() {
+			$currentScreen = get_current_screen();
+			if ( $currentScreen->id == 'business-profile_page_bpfwp-dashboard' ) {
+				wp_enqueue_style( 'bpfwp-admin', BPFWP_PLUGIN_URL . '/assets/css/admin.css', array(), BPFWP_VERSION );
+				wp_enqueue_script( 'bpfwp-admin-js', BPFWP_PLUGIN_URL . '/assets/js/admin.js', array( 'jquery' ), BPFWP_VERSION, true );
+			}
 		}
-	}
 
-	public function display_dashboard_screen() { 
-		global $bpfwp_controller;
+		public function display_dashboard_screen() {
+			global $bpfwp_controller;
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$permission   = $bpfwp_controller->permissions->check_permission( 'premium' );
+			$trial_active = 'trial' === ( bpfwpPremiumHelperCompatibility::contract()['status'] ?? '' );
 
-		$permission = $bpfwp_controller->permissions->check_permission( 'premium' );
-
-		?>
+			?>
 		<div id="bpfwp-dashboard-content-area">
 
 			<div id="bpfwp-dashboard-content-left">
 		
-				<?php if ( ! $permission or get_option("BPFWP_Trial_Happening") == "Yes") {
-					$premium_info = '<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full">';
+				<?php
+				do_action( 'bpfwp_license_status_card' );
+				if ( ! bpfwpPremiumHelperCompatibility::compatible() && bpfwpPremiumHelperCompatibility::has_license_history() ) {
+					echo '<div class="bpfwp-license-status"><p>' . esc_html__( 'Update FSP Premium Helper to restore compatible Premium access. Your settings are retained.', 'business-profile' ) . '</p></div>';
+				}
+				if ( ! $permission || $trial_active ) {
+					$premium_info  = '<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full">';
 					$premium_info .= '<div class="bpfwp-dashboard-new-widget-box-top">';
-					$premium_info .= sprintf( __( '<a href="%s" target="_blank">Visit our website</a> to learn how to upgrade to premium.'), 'https://www.fivestarplugins.com/premium-upgrade-instructions/?utm_source=bpfwp_dashboard&utm_content=visit_our_site_link' );
+					$premium_info .= sprintf( __( '<a href="%s" target="_blank">Visit our website</a> to learn how to upgrade to premium.' ), 'https://www.fivestarplugins.com/premium-upgrade-instructions/?utm_source=bpfwp_dashboard&utm_content=visit_our_site_link' );
 					$premium_info .= '</div>';
 					$premium_info .= '</div>';
 
@@ -88,7 +121,8 @@ class bpfwpDashboard {
 						$premium_info,
 						apply_filters( 'fsp_dashboard_top_kses_allowed_tags', wp_kses_allowed_html( 'post' ) )
 					);
-				} ?>
+				}
+				?>
 		
 				<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full" id="bpfwp-dashboard-support-widget-box">
 					<div class="bpfwp-dashboard-new-widget-box-top">Get Support<span id="bpfwp-dash-mobile-support-down-caret">&nbsp;&nbsp;&#9660;</span><span id="bpfwp-dash-mobile-support-up-caret">&nbsp;&nbsp;&#9650;</span></div>
@@ -134,36 +168,39 @@ class bpfwpDashboard {
 						<table class='bpfwp-overview-table wp-list-table widefat fixed striped posts'>
 							<thead>
 								<tr>
-									<th><?php _e("Location", 'business-profile'); ?></th>
+									<th><?php _e( 'Location', 'business-profile' ); ?></th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php
 									$args = array(
-										'post_type' => 'location',
-										'orderby' => 'date',
-										'order' => 'DESC',
-										'posts_per_page' => 10
+										'post_type'      => 'location',
+										'orderby'        => 'date',
+										'order'          => 'DESC',
+										'posts_per_page' => 10,
 									);
 
-									$Dashboard_Locations_Query = new WP_Query($args);
-									$Dashboard_Locations = $Dashboard_Locations_Query->get_posts();
+									$Dashboard_Locations_Query = new WP_Query( $args );
+									$Dashboard_Locations       = $Dashboard_Locations_Query->get_posts();
 
-									if (sizeOf($Dashboard_Locations) == 0) {echo "<tr><td colspan='3'>" . __("No Locations to display yet. Create a location for it to be displayed here.", 'business-profile') . "</td></tr>";}
-									else {
-										foreach ($Dashboard_Locations as $Dashboard_Location) { ?>
+									if ( sizeOf( $Dashboard_Locations ) == 0 ) {
+										echo "<tr><td colspan='3'>" . __( 'No Locations to display yet. Create a location for it to be displayed here.', 'business-profile' ) . '</td></tr>';} else {
+										foreach ( $Dashboard_Locations as $Dashboard_Location ) {
+											?>
 											<tr>
-												<td><a href='post.php?post=<?php echo esc_url( $Dashboard_Location->ID );?>&action=edit'><?php echo esc_html( $Dashboard_Location->post_title ); ?></a></td>
+												<td><a href='post.php?post=<?php echo esc_url( $Dashboard_Location->ID ); ?>&action=edit'><?php echo esc_html( $Dashboard_Location->post_title ); ?></a></td>
 											</tr>
-										<?php }
-									}
-								?>
+											<?php
+										}
+										}
+										?>
 							</tbody>
 						</table>
 					</div>
 				</div>
 		
-				<?php /*<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full">
+					<?php
+					/*<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full">
 					<div class="bpfwp-dashboard-new-widget-box-top">What People Are Saying</div>
 					<div class="bpfwp-dashboard-new-widget-box-bottom">
 						<ul class="bpfwp-dashboard-testimonials">
@@ -194,9 +231,11 @@ class bpfwpDashboard {
 							<?php } ?>
 						</ul>
 					</div>
-				</div> */ ?>
+					</div> */
+					?>
 		
-				<?php /* if($hideReview != 'Yes' and $Ask_Review_Date < time()){ ?>
+					<?php
+					/* if($hideReview != 'Yes' and $Ask_Review_Date < time()){ ?>
 					<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-one-third">
 						<div class="bpfwp-dashboard-new-widget-box-top">Leave a review</div>
 						<div class="bpfwp-dashboard-new-widget-box-bottom">
@@ -211,9 +250,12 @@ class bpfwpDashboard {
 							</div>
 						</div>
 					</div>
-				<?php } */ ?>
+					<?php } */
+					?>
 		
-				<?php if ( ! $permission or get_option("BPFWP_Trial_Happening") == "Yes" ) { ?>
+					<?php
+					if ( ! $permission || $trial_active ) {
+						?>
 					<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full" id="bpfwp-dashboard-guarantee-widget-box">
 						<div class="bpfwp-dashboard-new-widget-box-top">
 							<div class="bpfwp-dashboard-guarantee">
@@ -228,28 +270,38 @@ class bpfwpDashboard {
 		
 			<div id="bpfwp-dashboard-content-right">
 			
-				<?php if ( ! $permission or get_option("BPFWP_Trial_Happening") == "Yes" ) { ?>
+					<?php
+					if ( ! $permission || $trial_active ) {
+						?>
 					<div class="bpfwp-dashboard-new-widget-box ewd-widget-box-full" id="bpfwp-dashboard-get-premium-widget-box">
 						<div class="bpfwp-dashboard-new-widget-box-top">Get Premium</div>
 
-						<?php if ( get_option("BPFWP_Trial_Happening") == "Yes" ) { do_action( 'fsp_trial_happening', 'BPFWP' ); } ?>
+						<?php
+						if ( $trial_active ) {
+							do_action( 'fsp_trial_happening', 'BPFWP' );
+						}
+						?>
 						
 						<div class="bpfwp-dashboard-new-widget-box-bottom">
-							<div class="bpfwp-dashboard-get-premium-widget-features-title"<?php echo ( get_option("BPFWP_Trial_Happening") == "Yes" ? "style='padding-top: 20px;'" : ""); ?>>GET FULL ACCESS WITH OUR PREMIUM VERSION AND GET:</div>
+							<div class="bpfwp-dashboard-get-premium-widget-features-title"<?php echo ( $trial_active ? "style='padding-top: 20px;'" : '' ); ?>>GET FULL ACCESS WITH OUR PREMIUM VERSION AND GET:</div>
 							<ul class="bpfwp-dashboard-get-premium-widget-features">
 								<li>WooCommerce Integration</li>
 								<li>Google Rich Snippets</li>
 								<li>Drag and Drop Contact Card Order</li>
 								<li>Schema Default Helpers</li>
+								<li><?php esc_html_e( 'Bulk holiday hours (verified Premium key required)', 'business-profile' ); ?></li>
 								<li>+ More</li>
 							</ul>
+							<p><?php esc_html_e( 'Individual schedules and multiple locations remain Free. Bulk editing is not included in the existing trial or temporary legacy access.', 'business-profile' ); ?></p>
 							<a href="https://www.fivestarplugins.com/license-payment/?Selected=BPFWP&Quantity=1&utm_source=bpfwp_dashboard&utm_content=sidebar_upgrade" class="bpfwp-dashboard-get-premium-widget-button" target="_blank">UPGRADE NOW</a>
 								
-							<?php if ( ! get_option( "BPFWP_Trial_Happening" ) ) { 
-								$trial_info = sprintf( __( '<a href="%s" target="_blank">Visit our website</a> to learn how to get a free 7-day trial of the premium plugin.'), 'https://www.fivestarplugins.com/premium-upgrade-instructions/?utm_source=bpfwp_dashboard&utm_content=sidebar_visit_our_site_link' );
-						
+							<?php
+							if ( ! get_option( 'BPFWP_Trial_Happening' ) ) {
+								$trial_info = sprintf( __( '<a href="%s" target="_blank">Visit our website</a> to learn how to get a free 7-day trial of the premium plugin.' ), 'https://www.fivestarplugins.com/premium-upgrade-instructions/?utm_source=bpfwp_dashboard&utm_content=sidebar_visit_our_site_link' );
+
 								echo apply_filters( 'fsp_trial_button', $trial_info, 'BPFWP' );
-							} ?>
+							}
+							?>
 						</div>
 
 					</div>
@@ -281,7 +333,9 @@ class bpfwpDashboard {
 		
 		</div> <!-- bpfwp-dashboard-content-area -->
 		
-		<?php if ( ! $permission or get_option("BPFWP_Trial_Happening") == "Yes" ) { ?>
+			<?php
+			if ( ! $permission || $trial_active ) {
+				?>
 			<div id="bpfwp-dashboard-new-footer-one">
 				<div class="bpfwp-dashboard-new-footer-one-inside">
 					<div class="bpfwp-dashboard-new-footer-one-left">
@@ -323,7 +377,8 @@ class bpfwpDashboard {
 			</div>
 		</div> <!-- bpfwp-dashboard-new-footer-two -->
 		
-	<?php }
+			<?php
+		}
 
 	public function get_term_from_array($terms, $term_id) {
 		foreach ($terms as $term) {if ($term->term_id == $term_id) {return $term;}}

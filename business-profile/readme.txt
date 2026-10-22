@@ -5,7 +5,7 @@ Plugin URL: https://www.fivestarplugins.com/plugins/business-profile/
 Requires at Least: 5.3
 Tested Up To: 7.1
 Tags: business profile, contact card, schema, structured data, google map
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv3
 License URI:http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -291,6 +291,14 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 == Changelog ==
 
+= 2.5.0 (2026-10-22) =
+- **IMPORTANT NOTE: This is release 2 of a 4-part series. Full documentation for a number of the new features is not yet available, and will be added once the 4th update in the series is completed. Please delay updating until the final update round if documentation is required.**
+- Added (premium) bulk holiday hours editing for selected locations, with previews, resumable batches and per-location recovery available for seven days. (This is accessible from the new Bulk Holiday Hours menu item found under Business Profile in the WP sidebar menu.)
+- Restricted site-wide Schemas and Locations administration to users with the manage_options capability. Authorized schema-value editing on individual posts and pages remains available. This fixes the issue with the Business Profile menu item showing in the WP sidebar for non-authorized users.
+- Restored overnight opening hours as a single range on the opening day, while preserving the underlying schedule and structured data.
+- Restored the WordPress site title as the public business name when the main business name is left blank.
+- Improved license activation, saved-key recovery and status messages.
+
 = 2.4.0 (2026-09-30) =
 - **IMPORTANT NOTE: This is a major update with several big changes. We suggest testing this update in a staging or development environment before updating your live environment. Or wait a few days before updating in the event that an issue is identified that requires a fix/new update.**
 - Added a guided setup process for business details, opening hours and contact-page creation, with the ability to resume setup.
@@ -523,5 +531,5 @@ You'll find more help in the [User Guide](https://doc.fivestarplugins.com/plugin
 
 == Upgrade Notice ==
 
-= 2.4.0 =
-This update changes location publication controls, opening-hours handling and schema data sources. Back up your site and test the update before applying it to a live site, especially if you use custom schema sources, template overrides, Premium Helper or restaurant integrations. Review any blocked schema defaults and check your public contact pages after updating. Premium SEO integration requires the coordinated Helper update and a supported provider configuration.
+= 2.5.0 =
+Schemas and Locations administration now requires the manage_options capability. Standard Editors can still edit schema values on posts and pages they are authorized to edit. This is release 2 of a 4-part series. Full documentation for a number of the new features is not yet available, and will be added once the 4th update in the series is completed. Please delay updating until the final update round if documentation is required.

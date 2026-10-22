@@ -1,204 +1,81 @@
 <?php
-/**
- * Define settings used throughout the plugin.
- *
- * @package   BusinessProfile
- * @copyright Copyright (c) 2016, Theme of the Crop
- * @license   GPL-2.0+
- * @since     0.0.1
- */
-
+/** Create managed automatic rules without modifying independently authored definitions. */
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'bpfwpIntegrations' ) ) :
+class bpfwpIntegrations {
+	public function __construct() {
+		add_action( 'updated_option', array( $this, 'settings_saved' ), 10, 3 );
+		add_action( 'added_option', array( $this, 'settings_added' ), 10, 2 );
+	}
+	public function settings_added( $option, $value ) {
 
-	/**
-	 * Class to handle configurable settings for Business Profile
-	 *
-	 * @since 0.0.1
-	 */
-	class bpfwpIntegrations {
-		private $previous = array();
-
-		/**
-		 * Initialize the class and register hooks.
-		 *
-		 * @since  2.0.0
-		 * @access public
-		 * @return void
-		 */
-		public function __construct() {
-
-			add_action( 'updated_option', array( $this, 'settings_saved' ), 10, 3 );
-			add_action( 'added_option', array( $this, 'settings_added' ), 10, 2 );
+		$this->settings_saved( $option, array(), $value );
+	}
+	public function settings_saved( $option, $old, $value ) {
+		if ( 'bpfwp-settings' !== $option || ! is_array( $value ) ) {
+			return;
 		}
-		public function settings_added( $option, $value ) {
-			$this->settings_saved( $option, array(), $value );
-		}
-
-		public function settings_saved( $option, $old, $value ) {
-			if ( 'bpfwp-settings' !== $option || ! is_array( $value ) ) {
-				return;
+		foreach ( bpfwpSchemaRuleOwnership::generators() as $origin => $generator ) {
+			if ( ! empty( $value[ $generator['setting'] ] ) ) {
+				$this->ensure( $origin );
 			}
-			$this->previous = is_array( $old ) ? $old : array();
-			$this->check_for_articles_rich_snippets_change( $value );
-			$this->check_for_wc_integration_change( $value );
-		}
-
-		/**
-		 * Check to see if WC integration was toggled on or off
-		 *
-		 * @since 2.0.0
-		 */
-		public function check_for_articles_rich_snippets_change( $val ) {
-			global $bpfwp_controller;
-
-			if ( ! is_object( $bpfwp_controller ) ) {
-				return;
-			}
-
-			// WooCommerce integration has been turned off
-			if ( empty( $val['article-rich-snippets'] ) && ! empty( $this->previous['article-rich-snippets'] ) ) {
-				$article_post = get_page_by_path( 'business-profile-article-schema', OBJECT, $bpfwp_controller->cpts->schema_cpt_slug );
-
-				if ( $article_post ) {
-					$post_data = array(
-						'ID'          => $article_post->ID,
-						'post_status' => 'disabled',
-					);
-
-					wp_update_post( $post_data );
-				}
-			}
-			// WooCommerce integration has been turned on
-			elseif ( ! empty( $val['article-rich-snippets'] ) && empty( $this->previous['article-rich-snippets'] ) ) {
-				$article_post = get_page_by_path( 'business-profile-article-schema', OBJECT, $bpfwp_controller->cpts->schema_cpt_slug );
-
-				// Post exists, enable it
-				if ( $article_post ) {
-					$post_data = array(
-						'ID'          => $article_post->ID,
-						'post_status' => 'publish',
-					);
-
-					wp_update_post( $post_data );
-				}
-				// Post doesn't exist, create it
-				else {
-					$post_data = array(
-						'post_title'  => 'Business Profile Article Schema',
-						'post_name'   => 'business-profile-article-schema',
-						'post_type'   => $bpfwp_controller->cpts->schema_cpt_slug,
-						'post_status' => 'publish',
-					);
-
-					$bpwc_post_id = wp_insert_post( $post_data );
-
-					if ( $bpwc_post_id ) {
-						$schema_meta_data = array(
-							'schema_target_type'  => 'post_type',
-							'schema_target_value' => 'post',
-							'schema_type'         => 'Article',
-							'default_display'     => 'on',
-							'field_defaults'      => array(
-								'_author_name'           => 'function display_name get_the_author_meta',
-								'_datePublished'         => 'function get_the_date',
-								'_dateModified'          => 'function get_the_modified_date',
-								'_headline'              => 'function get_the_title',
-								'_image'                 => 'function bpfwp_get_post_image_url',
-								'_description'           => 'function get_the_excerpt',
-								'_publisher_name'        => 'option blogname',
-								'_publisher_logo_height' => 'function bpfwp_get_site_logo_height',
-								'_publisher_logo_width'  => 'function bpfwp_get_site_logo_width',
-								'_publisher_logo_url'    => 'function bpfwp_get_site_logo_url',
-							),
-						);
-
-						update_post_meta( $bpwc_post_id, 'bpfwp-schema-data', $schema_meta_data );
-					}
-				}
-			}
-
-			return $val;
-		}
-
-		/**
-		 * Check to see if WC integration was toggled on or off
-		 *
-		 * @since 2.0.0
-		 */
-		public function check_for_wc_integration_change( $val ) {
-			global $bpfwp_controller;
-
-			if ( ! is_object( $bpfwp_controller ) ) {
-				return;
-			}
-
-			// WooCommerce integration has been turned off
-			if ( empty( $val['woocommerce-integration'] ) && ! empty( $this->previous['woocommerce-integration'] ) ) {
-				$woocommerce_post = get_page_by_path( 'business-profile-woocommerce-schema', OBJECT, $bpfwp_controller->cpts->schema_cpt_slug );
-
-				if ( $woocommerce_post ) {
-					$post_data = array(
-						'ID'          => $woocommerce_post->ID,
-						'post_status' => 'disabled',
-					);
-
-					wp_update_post( $post_data );
-				}
-			}
-			// WooCommerce integration has been turned on
-			elseif ( ! empty( $val['woocommerce-integration'] ) && empty( $this->previous['woocommerce-integration'] ) ) {
-				$woocommerce_post = get_page_by_path( 'business-profile-woocommerce-schema', OBJECT, $bpfwp_controller->cpts->schema_cpt_slug );
-
-				// Post exists, enable it
-				if ( $woocommerce_post ) {
-					$post_data = array(
-						'ID'          => $woocommerce_post->ID,
-						'post_status' => 'publish',
-					);
-
-					wp_update_post( $post_data );
-				}
-				// Post doesn't exist, create it
-				else {
-					$post_data = array(
-						'post_title'  => 'Business Profile WooCommerce Schema',
-						'post_name'   => 'business-profile-woocommerce-schema',
-						'post_type'   => $bpfwp_controller->cpts->schema_cpt_slug,
-						'post_status' => 'publish',
-					);
-
-					$bpwc_post_id = wp_insert_post( $post_data );
-
-					if ( $bpwc_post_id ) {
-						$schema_meta_data = array(
-							'schema_target_type'  => 'post_type',
-							'schema_target_value' => 'product',
-							'schema_type'         => 'Product',
-							'default_display'     => 'on',
-							'field_defaults'      => array(
-								'_image'                  => 'function bpfwp_get_post_image_url',
-								'_description'            => 'function get_the_excerpt',
-								'_sku'                    => 'meta _sku',
-								'_review_reviewRating_ratingValue' => 'function bpfwp_wc_get_most_recent_review_rating',
-								'_review_reviewBody'      => 'function bpfwp_wc_get_most_recent_review_body',
-								'_review_author_name'     => 'function bpfwp_wc_get_most_recent_review_author',
-								'_aggregateRating_ratingValue' => 'meta _wc_average_rating',
-								'_aggregateRating_reviewCount' => 'meta _wc_review_count',
-								'_offers_priceCurrency'   => 'option woocommerce_currency',
-								'_offers_price'           => 'meta _price',
-								'_offers_pricevalidUntil' => 'meta _sale_price_dates_to',
-								'_offers_availability'    => 'meta _stock_status',
-							),
-						);
-
-						update_post_meta( $bpwc_post_id, 'bpfwp-schema-data', $schema_meta_data );
-					}
-				}
-			}
-
-			return $val;
 		}
 	}
-endif;
+	public function check_for_articles_rich_snippets_change( $value ) {
+
+		if ( ! empty( $value['article-rich-snippets'] ) ) {
+			$this->ensure( 'automatic_article' );
+		}
+		return $value;
+	}
+	public function check_for_wc_integration_change( $value ) {
+
+		if ( ! empty( $value['woocommerce-integration'] ) ) {
+			$this->ensure( 'automatic_woocommerce' );
+		}
+		return $value;
+	}
+	private function ensure( $origin ) {
+		$generator = bpfwpSchemaRuleOwnership::generators()[ $origin ];
+		$settings  = bpfwpSettingsMutation::current();
+		if ( empty( $settings[ $generator['setting'] ] ) || ! bpfwpPremiumCapabilities::allowed( $generator['capability'] ) ) {
+			return;
+		}
+		$lock = bpfwpPremiumCapabilities::acquire( $generator['capability'] );
+		if ( is_wp_error( $lock ) ) {
+			return;
+		}
+		try {
+			// Historical matches must be classified; neither manual nor disabled rules are enabled here.
+			if ( get_page_by_path( $generator['slug'], OBJECT, bpfwpSchemaRuleOwnership::post_type() ) ) {
+				return;
+			}
+			if ( ! bpfwpPremiumCapabilities::allowed( $generator['capability'] ) ) {
+				return;
+			}
+			$id = wp_insert_post(
+				array(
+					'post_title'  => $generator['title'],
+					'post_name'   => $generator['slug'],
+					'post_type'   => bpfwpSchemaRuleOwnership::post_type(),
+					'post_status' => 'draft',
+				),
+				true
+			);
+			if ( is_wp_error( $id ) || ! $id ) {
+				return;
+			}
+			update_post_meta( $id, 'bpfwp-schema-data', bpfwpSchemaRuleOwnership::definition( $origin ) );
+			if ( bpfwpSchemaRuleOwnership::stamp( $id, $origin ) && bpfwpPremiumCapabilities::allowed( $generator['capability'] ) ) {
+				wp_update_post(
+					array(
+						'ID'          => $id,
+						'post_status' => 'publish',
+					)
+				);
+			}
+		} finally {
+			bpfwpPremiumCapabilities::release();
+		}
+	}
+}

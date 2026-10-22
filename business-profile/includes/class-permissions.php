@@ -32,22 +32,31 @@ class bpfwpPermissions {
 		}
 
 		public function set_permissions() {
-			$stored                 = get_option( 'bpfwp-permission-level' );
-			$this->permission_level = self::normalize_level( $stored );
-			if ( ! is_array( $stored ) ) {
-				update_option( 'bpfwp-permission-level', array( $this->permission_level ) );
-			}
+			$contract               = bpfwpPremiumHelperCompatibility::contract();
+			$this->permission_level = $contract['permission_level'] ?? 1;
 		}
 
 		public function get_permission_level() {
 			$this->set_permissions();
 		}
 
-	public function check_permission($permission_type = '') {
-		if ( ! $this->permission_level ) { $this->get_permission_level(); }
-
-		return ( array_key_exists( $permission_type, $this->plugin_permissions ) ? ( $this->permission_level >= $this->plugin_permissions[$permission_type] ? true : false ) : false );
-	}
+		public function check_permission( $permission_type = '' ) {
+			if ( ! is_string( $permission_type ) || ( ! array_key_exists( $permission_type, $this->plugin_permissions ) && ! in_array( $permission_type, bpfwpPremiumCapabilities::names(), true ) ) ) {
+				return false;
+			}
+			$contract = bpfwpPremiumHelperCompatibility::contract();
+			if ( 2 !== ( $contract['permission_level'] ?? 1 ) ) {
+				return false;
+			}
+			$caps = $contract['capabilities'];
+			if ( in_array( $permission_type, array( 'premium', 'locations' ), true ) ) {
+				return ! empty( $caps );
+			}
+			if ( 'integrations' === $permission_type ) {
+				return in_array( 'article_schema', $caps, true ) && in_array( 'woocommerce_schema', $caps, true );
+			}
+			return in_array( $permission_type, $caps, true );
+		}
 
 		public function update_permissions() {
 			$this->get_permission_level();

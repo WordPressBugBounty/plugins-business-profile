@@ -185,6 +185,19 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 		 * @return mixed A setting based on the key provided.
 		 */
 		public function get_setting( $setting, $location = false ) {
+			$map = bpfwpPremiumCapabilities::settings();
+			if ( isset( $map[ $setting ] ) && ! bpfwpPremiumCapabilities::allowed( $map[ $setting ] ) ) {
+				return $this->defaults[ $setting ] ?? false;
+			}
+			$value = $this->get_saved_setting( $setting, $location );
+			if ( ! $location && 'name' === $setting && ( null === $value || false === $value || ( is_string( $value ) && '' === trim( $value ) ) ) ) {
+				return get_bloginfo( 'name' );
+			}
+			return $value;
+		}
+
+		/** Raw retained values for settings display and authorized preservation only. */
+		public function get_saved_setting( $setting, $location = false ) {
 
 			if ( ! $this->settings ) {
 				$this->settings = get_option( 'bpfwp-settings', array() );
@@ -978,16 +991,19 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 	
 		public function premium_info( $section_and_perm_type ) {
 			global $bpfwp_controller;
-	
-			$is_premium_user = $bpfwp_controller->permissions->check_permission( $section_and_perm_type );
+
+			$is_premium_user     = $bpfwp_controller->permissions->check_permission( $section_and_perm_type );
 			$is_helper_installed = defined( 'FSPPH_PLUGIN_FNAME' ) && is_plugin_active( FSPPH_PLUGIN_FNAME );
-	
+
 			if ( $is_premium_user || $is_helper_installed ) {
+				if ( 'premium' === $section_and_perm_type ) {
+					return '<p><a href="' . esc_url( admin_url( 'admin.php?page=bpfwp-dashboard' ) ) . '">' . esc_html__( 'View Premium license status and recovery', 'business-profile' ) . '</a></p><p>' . esc_html__( 'Individual location editing, schedules, contact cards and manually authored schema remain Free. Bulk holiday editing requires a verified Premium key and is not included in the existing trial or temporary legacy access.', 'business-profile' ) . '</p>';
+				}
 				return false;
 			}
-	
+
 			$content = '';
-	
+
 			$premium_features = '
 				<p><strong>' . __( 'The premium version also gives you access to the following features:', 'business-profile' ) . '</strong></p>
 				<ul class="bpfwp-dashboard-new-footer-one-benefits">
@@ -997,17 +1013,17 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 					<li>' . __( 'Automatically-integrated schema for posts', 'business-profile' ) . '</li>
 					<li>' . __( 'Default schema helpers', 'business-profile' ) . '</li>
 					<li>' . __( 'Quickly add schema for any page/element using our custom list of defaults', 'business-profile' ) . '</li>
-					<li>' . __( 'Email support', 'business-profile' ) . '</li>
+					<li>' . __( 'Bulk holiday editing for explicitly selected locations (verified Premium key required)', 'business-profile' ) . '</li>
+					<li>' . __( 'Support and update coverage is separate from lifetime Premium runtime access', 'business-profile' ) . '</li>
 				</ul>
 				<div class="bpfwp-dashboard-new-footer-one-buttons">
 					<a class="bpfwp-dashboard-new-upgrade-button" href="https://www.fivestarplugins.com/license-payment/?Selected=BPFWP&Quantity=1&utm_source=bpfwp_settings&utm_content=' . $section_and_perm_type . '" target="_blank">' . __( 'UPGRADE NOW', 'business-profile' ) . '</a>
 				</div>
 			';
-	
+
 			switch ( $section_and_perm_type ) {
-	
+
 				case 'premium':
-	
 					$content = '
 						<div class="bpfwp-settings-preview">
 							<h2>' . __( 'Premium', 'business-profile' ) . '<span>' . __( 'Premium', 'business-profile' ) . '</span></h2>
@@ -1018,11 +1034,10 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 							' . $premium_features . '
 						</div>
 					';
-	
+
 					break;
 
 				case 'labelling':
-	
 					$content = '
 						<div class="bpfwp-settings-preview">
 							<h2>' . __( 'Labelling', 'business-profile' ) . '<span>' . __( 'Premium', 'business-profile' ) . '</span></h2>
@@ -1033,11 +1048,10 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 							' . $premium_features . '
 						</div>
 					';
-	
+
 					break;
 
 				case 'styling':
-
 					$content = '
 						<div class="bpfwp-settings-preview">
 							<h2>' . __( 'Styling', 'business-profile' ) . '<span>' . __( 'Premium', 'business-profile' ) . '</span></h2>
@@ -1049,12 +1063,12 @@ if ( ! class_exists( 'bpfwpSettings' ) ) :
 							' . $premium_features . '
 						</div>
 					';
-	
+
 					break;
-				}
-	
-			return function() use ( $content ) {
-	
+			}
+
+			return function () use ( $content ) {
+
 				echo wp_kses_post( $content );
 			};
 		}

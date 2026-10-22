@@ -1,57 +1,63 @@
 <?php
-if ( !defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-if ( !class_exists( 'bpfwpAdminCustomFields' ) ) {
-/**
- * Class to handle the admin custom fields page for Business Profile
- *
- * @since 2.3.4
- */
-class bpfwpAdminCustomFields {
-
-	public function __construct() {
-
-		// Add the admin menu
-		add_action( 'admin_menu', array( $this, 'maybe_add_menu_page' ), 11 );
-	}
-
+if ( ! class_exists( 'bpfwpAdminCustomFields' ) ) {
 	/**
-	 * Add the top-level admin menu page
+	 * Class to handle the admin custom fields page for Business Profile
+	 *
 	 * @since 2.3.4
 	 */
-	public function maybe_add_menu_page() {
-		global $bpfwp_controller;
+	class bpfwpAdminCustomFields {
 
-		if ( empty( $bpfwp_controller->settings->get_setting( 'custom-fields' ) ) ) { return; }
+		public function __construct() {
 
-		add_submenu_page( 
-			'bpfwp-business-profile', 
-			_x( 'Custom Fields', 'Title of admin page that lets you view and edit all custom field valuess', 'business-profile' ),
-			_x( 'Custom Fields', 'Title of the custom fields admin menu item', 'business-profile' ), 
-			'manage_options', 
-			'bpfwp-custom-fields', 
-			array( $this, 'show_admin_custom_fields_page' )
-		);
-
-	}
-
-	/**
-	 * Display the admin custom fields page
-	 * @since 2.3.4
-	 */
-	public function show_admin_custom_fields_page() {
-		global $bpfwp_controller;
-
-		if ( ! empty( $_POST['bpfwp-custom-fields-submit'] ) ) {
-
-			$this->save_custom_field_values();
+			// Add the admin menu
+			add_action( 'admin_menu', array( $this, 'maybe_add_menu_page' ), 11 );
 		}
 
-		$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
+		/**
+		 * Add the top-level admin menu page
+		 * @since 2.3.4
+		 */
+		public function maybe_add_menu_page() {
+			global $bpfwp_controller;
 
-		$custom_field_values = $bpfwp_controller->settings->get_setting( 'custom_field_values' );
+			if ( empty( $bpfwp_controller->settings->get_setting( 'custom-fields' ) ) ) {
+				return;
+			}
 
-		?>
+			add_submenu_page(
+				'bpfwp-business-profile',
+				_x( 'Custom Fields', 'Title of admin page that lets you view and edit all custom field valuess', 'business-profile' ),
+				_x( 'Custom Fields', 'Title of the custom fields admin menu item', 'business-profile' ),
+				'manage_options',
+				'bpfwp-custom-fields',
+				array( $this, 'show_admin_custom_fields_page' )
+			);
+		}
+
+		/**
+		 * Display the admin custom fields page
+		 * @since 2.3.4
+		 */
+		public function show_admin_custom_fields_page() {
+			global $bpfwp_controller;
+			if ( ! current_user_can( 'manage_options' ) || ! bpfwpPremiumCapabilities::allowed( 'custom_fields' ) ) {
+				return;
+			}
+
+			if ( ! empty( $_POST['bpfwp-custom-fields-submit'] ) ) {
+
+				$this->save_custom_field_values();
+			}
+
+			$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
+
+			$custom_field_values = $bpfwp_controller->settings->get_setting( 'custom_field_values' );
+
+			?>
 
 		<div class="wrap">
 			<h1>
@@ -70,7 +76,9 @@ class bpfwpAdminCustomFields {
 						<?php _e( 'These global custom field values are used for the main contact card, or if a custom field value isn\'t set for a particular location.', 'business-profile' ); ?>
 					</div>
 	
-					<?php foreach ( $custom_fields as $custom_field ) { ?>
+					<?php
+					foreach ( $custom_fields as $custom_field ) {
+						?>
 	
 						<div class="bpfwp-custom-field">
 
@@ -84,17 +92,25 @@ class bpfwpAdminCustomFields {
 		
 								<?php $field_value = ! empty( $custom_field_values[ $custom_field->id ] ) ? $custom_field_values[ $custom_field->id ] : ''; ?>
 		
-								<?php if ( $custom_field->type == 'textarea' ) { ?>
+								<?php
+								if ( $custom_field->type == 'textarea' ) {
+									?>
 				
 										<textarea name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>'>
 											<?php echo esc_html( $field_value ); ?>
 										</textarea>
 				
-								<?php } elseif ( $custom_field->type == 'select' ) { ?>
-									<?php if ( ! empty( $options ) ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'select' ) {
+									?>
+									<?php
+									if ( ! empty( $options ) ) {
+										?>
 				
 										<select name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>'>
-											<?php foreach ( $options as $option ) { ?>
+											<?php
+											foreach ( $options as $option ) {
+												?>
 				
 												<option value='<?php echo esc_attr( $option ); ?>' <?php echo ( $option == $field_value ? 'selected' : '' ); ?> >
 													<?php echo esc_html( $option ); ?>
@@ -103,12 +119,18 @@ class bpfwpAdminCustomFields {
 										</select>
 				
 									<?php } ?>
-								<?php } elseif ( $custom_field->type == 'checkbox' ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'checkbox' ) {
+									?>
 									<?php $field_value = is_array( $field_value ) ? $field_value : array(); ?>
-									<?php if ( ! empty( $options ) ) { ?>
+									<?php
+									if ( ! empty( $options ) ) {
+										?>
 				
 										<div class='bpfwp-fields-page-radio-checkbox-container'>
-											<?php foreach ( $options as $option ) { ?>
+											<?php
+											foreach ( $options as $option ) {
+												?>
 				
 												<div class='bpfwp-fields-page-radio-checkbox-each'>
 													<input type='checkbox' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>[]' value='<?php echo esc_attr( $option ); ?>' <?php echo ( in_array( $option, $field_value ) ? 'checked' : '' ); ?> />
@@ -118,11 +140,17 @@ class bpfwpAdminCustomFields {
 										</div>
 				
 									<?php } ?>
-								<?php } elseif ( $custom_field->type == 'radio' ) { ?>
-									<?php if ( ! empty( $options ) ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'radio' ) {
+									?>
+									<?php
+									if ( ! empty( $options ) ) {
+										?>
 				
 										<div class='bpfwp-fields-page-radio-checkbox-container'>
-											<?php foreach ( $options as $option ) { ?>
+											<?php
+											foreach ( $options as $option ) {
+												?>
 				
 												<div class='bpfwp-fields-page-radio-checkbox-each'>
 													<input type='radio' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>' value='<?php echo esc_attr( $option ); ?>' <?php echo ( $option == $field_value ? 'checked' : '' ); ?> />
@@ -132,20 +160,26 @@ class bpfwpAdminCustomFields {
 										</div>
 				
 									<?php } ?>
-								<?php } elseif ( $custom_field->type == 'date' ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'date' ) {
+									?>
 				
 									<input type='date' class='bpfwp-jquery-datepicker' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>' value='<?php echo esc_attr( $field_value ); ?>' />
 				
-								<?php } elseif ( $custom_field->type == 'datetime' ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'datetime' ) {
+									?>
 				
 									<input type='datetime-local' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>' value='<?php echo esc_attr( $field_value ); ?>' />
 								
-								<?php } elseif ( $custom_field->type == 'file' ) { ?>
+									<?php
+								} elseif ( $custom_field->type == 'file' ) {
+									?>
 			
 									<div class='bpfwp-fields-page-file-preview'>
 			
 										<span>
-											<?php _e( 'Current File:',  'business-profile' ); ?> <?php echo ! empty( $field_value ) ? esc_html( basename( $field_value ) ) : ''; ?>
+											<?php _e( 'Current File:', 'business-profile' ); ?> <?php echo ! empty( $field_value ) ? esc_html( basename( $field_value ) ) : ''; ?>
 										</span>
 			
 									</div>
@@ -154,7 +188,9 @@ class bpfwpAdminCustomFields {
 
 									<input type='file' id='bpfwp-<?php echo esc_attr( $custom_field->name ); ?>' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>' />
 			
-								<?php } else { ?>
+									<?php
+								} else {
+									?>
 				
 									<input type='text' id='bpfwp-<?php echo esc_attr( $custom_field->name ); ?>' name='bpfwp-custom-field-<?php echo esc_attr( $custom_field->id ); ?>' value='<?php echo esc_attr( $field_value ); ?>' size='25' />
 				
@@ -176,51 +212,71 @@ class bpfwpAdminCustomFields {
 
 		</div>
 
-		<?php
-	}
-
-	/**
-	 * Save the custom fields when the form is submitted
-	 * @since 2.3.4
-	 */
-	public function save_custom_field_values() {
-		global $bpfwp_controller;
-
-		if ( ! isset( $_POST['bpfwp_custom_fields_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_custom_fields_nonce'] ), 'bpfwp_custom_fields' ) ) { return false; } 
-
-		$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
-
-		$custom_field_values = array();
-
-		foreach ( $custom_fields as $custom_field ) { 
-				
-			$input_name = 'bpfwp-custom-field-' . $custom_field->id;
-	
-			if ( $custom_field->type == 'file' ) {
-	
-				if ( empty( $_FILES[ $input_name ]['name'] ) ) {
-
-					$field_value = sanitize_text_field( $_POST[ $input_name ] ); 
-				}
-				else {
-				
-					$uploaded_file = wp_handle_upload( $_FILES[ $input_name ], array( 'test_form' => false ) );
-					$field_value = $uploaded_file['url'];
-				}
-			}
-			elseif ( $custom_field->type == 'checkbox' ) {
-	
-				$field_value = ( isset( $_POST[ $input_name ] ) and is_array( $_POST[ $input_name ] ) ) ? array_map( 'sanitize_text_field', $_POST[ $input_name ] ) : array();
-			}
-			else {
-					
-				$field_value = sanitize_text_field( $_POST[ $input_name ] );
-			}
-
-			$custom_field_values[ $custom_field->id ] = $field_value;
+			<?php
 		}
-			
-		update_option( 'bpfwp_custom_field_values', $custom_field_values );
+
+		/**
+		 * Save the custom fields when the form is submitted
+		 * @since 2.3.4
+		 */
+		public function save_custom_field_values() {
+			global $bpfwp_controller;
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return false;
+			}
+
+			if ( ! isset( $_POST['bpfwp_custom_fields_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_custom_fields_nonce'] ), 'bpfwp_custom_fields' ) ) {
+				return false;
+			}
+			$lock = bpfwpPremiumCapabilities::acquire( 'custom_fields' );
+			if ( is_wp_error( $lock ) ) {
+				return false;
+			}
+			try {
+				$expected_values = fspphBPFWPEntitlementStore::raw( 'bpfwp_custom_field_values' );
+
+				$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
+
+				$custom_field_values = array();
+
+				foreach ( $custom_fields as $custom_field ) {
+
+					$input_name = 'bpfwp-custom-field-' . $custom_field->id;
+
+					if ( $custom_field->type == 'file' ) {
+
+						if ( empty( $_FILES[ $input_name ]['name'] ) ) {
+
+							$field_value = isset( $_POST[ $input_name ] ) && is_string( $_POST[ $input_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) ) : '';
+						} else {
+							if ( ! current_user_can( 'upload_files' ) ) {
+								return false;
+							}
+
+							$uploaded_file = wp_handle_upload( $_FILES[ $input_name ], array( 'test_form' => false ) );
+							if ( ! isset( $uploaded_file['url'] ) ) {
+								return false;
+							}
+							$field_value = $uploaded_file['url'];
+						}
+					} elseif ( $custom_field->type == 'checkbox' ) {
+
+						$field_value = ( isset( $_POST[ $input_name ] ) and is_array( $_POST[ $input_name ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $input_name ] ) ) : array();
+					} else {
+
+						$field_value = isset( $_POST[ $input_name ] ) && is_string( $_POST[ $input_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) ) : '';
+					}
+
+					$custom_field_values[ $custom_field->id ] = $field_value;
+				}
+
+				if ( ! bpfwpPremiumCapabilities::allowed( 'custom_fields' ) ) {
+					return false;
+				}
+				return fspphBPFWPEntitlementStore::cas( 'bpfwp_custom_field_values', $expected_values, $custom_field_values );
+			} finally {
+				bpfwpPremiumCapabilities::release();
+			}
+		}
 	}
-}
 } // endif;

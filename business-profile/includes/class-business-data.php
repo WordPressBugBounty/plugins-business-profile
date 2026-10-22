@@ -203,21 +203,6 @@ class bpfwpBusinessData {
 
 	/** Called only after the location editor's capability and nonce checks. */
 	public static function save_modes( $post_id, $submitted ) {
-		if ( ! is_array( $submitted ) ) {
-			return;
-		}
-		$modes = get_post_meta( $post_id, 'bpfwp-field-modes', true );
-		$modes = is_array( $modes ) ? $modes : array();
-		foreach ( self::mode_fields() as $field ) {
-			if ( ! isset( $submitted[ $field ] ) ) {
-				continue;
-			}
-			if ( 'legacy' === $submitted[ $field ] ) {
-				unset( $modes[ $field ] );
-			} elseif ( in_array( $submitted[ $field ], array( 'inherit', 'override', 'empty' ), true ) ) {
-				$modes[ $field ] = $submitted[ $field ];
-			}
-		}
-		update_post_meta( $post_id, 'bpfwp-field-modes', $modes );
+		return bpfwpLocationHoursMutation::write( $post_id, array( 'submitted_modes' => $submitted ) );
 	}
 }

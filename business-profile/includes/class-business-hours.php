@@ -162,7 +162,8 @@ class bpfwpBusinessHours {
 		$priority  = 0;
 		$intervals = array();
 		$closed    = false;
-		foreach ( $schedule['exceptions'] as $rule ) {
+		$origins   = array();
+		foreach ( $schedule['exceptions'] as $index => $rule ) {
 			if ( ( $rule['start'] && $date < $rule['start'] ) || ( $rule['end'] && $date > $rule['end'] ) || $rule['priority'] < $priority ) {
 				continue;
 			}
@@ -170,7 +171,9 @@ class bpfwpBusinessHours {
 				$intervals = array();
 				$closed    = false;
 				$priority  = $rule['priority'];
+				$origins   = array();
 			}
+			$origins[] = 'exception:' . $index;
 			if ( ! $rule['interval'] ) {
 				$closed = true;
 			} else {
@@ -179,15 +182,17 @@ class bpfwpBusinessHours {
 		}
 		if ( ! $priority ) {
 			$weekday = strtolower( ( new DateTimeImmutable( $date, new DateTimeZone( 'UTC' ) ) )->format( 'l' ) );
-			foreach ( $schedule['weekly'] as $rule ) {
+			foreach ( $schedule['weekly'] as $index => $rule ) {
 				if ( in_array( $weekday, $rule['days'], true ) ) {
 					$intervals[] = $rule['interval'];
+					$origins[]   = 'weekly:' . $index;
 				}
 			}
 		}
 		return array(
 			'exception' => $priority > 0,
 			'intervals' => $closed ? array() : self::merge( $intervals ),
+			'origins'   => $origins,
 		);
 	}
 
@@ -221,7 +226,7 @@ class bpfwpBusinessHours {
 		}
 		$time = array(
 			'start' => self::clock( $interval[0] ),
-			'end'   => self::clock( $interval[1] ),
+			'end'   => self::clock( $interval[1] % 1440 ),
 		);
 		foreach ( $schedule['weekly'] as $rule ) {
 			if ( ! in_array( $day, $rule['days'], true ) ) {
@@ -235,6 +240,33 @@ class bpfwpBusinessHours {
 			}
 		}
 		return $time;
+	}
+
+	/** Display original opening-day intervals, before the effective model splits midnight. */
+	public static function weekly_display_rows( $schedule ) {
+		$rows = array();
+		foreach ( self::weekdays() as $day ) {
+			$intervals = array();
+			foreach ( $schedule['weekly'] as $rule ) {
+				if ( in_array( $day, $rule['days'], true ) ) {
+					$intervals[] = $rule['interval'];
+				}
+			}
+			foreach ( self::merge( $intervals ) as $interval ) {
+				$origins = array();
+				foreach ( $schedule['weekly'] as $index => $rule ) {
+					if ( in_array( $day, $rule['days'], true ) && $rule['interval'][0] < $interval[1] && $rule['interval'][1] > $interval[0] ) {
+						$origins[] = 'weekly:' . $index;
+					}
+				}
+				$rows[] = array(
+					'weekdays' => array( $day => 1 ),
+					'time'     => self::display_time( $schedule, $day, $interval ),
+					'origins'  => $origins,
+				);
+			}
+		}
+		return $rows;
 	}
 
 	public static function weekly_schema( $schedule ) {
@@ -264,6 +296,15 @@ class bpfwpBusinessHours {
 
 	/** Partition overlapping ranges at calendar boundaries, preserving unbounded sides. */
 	public static function exception_schema( $schedule ) {
+		return self::exception_records( $schedule, false );
+	}
+
+	/** Dated presentation does not duplicate carryover on the next calendar date. */
+	public static function dated_display_rows( $schedule ) {
+		return self::exception_records( $schedule, true );
+	}
+
+	private static function exception_records( $schedule, $display ) {
 		$boundaries = array();
 		foreach ( $schedule['exceptions'] as $rule ) {
 			if ( $rule['start'] ) {
@@ -306,10 +347,10 @@ class bpfwpBusinessHours {
 					}
 				}
 			}
-			if ( ! $day['exception'] && ! $carry && ! $clip_weekly ) {
+			if ( ! $day['exception'] && ! $clip_weekly && ( $display || ! $carry ) ) {
 				continue;
 			}
-			$intervals = $day['exception'] ? $day['intervals'] : self::for_date( $schedule, $date );
+			$intervals = $display || $day['exception'] ? $day['intervals'] : self::for_date( $schedule, $date );
 			foreach ( $intervals ? $intervals : array( array( 0, 0 ) ) as $interval ) {
 				if ( $next['exception'] && $interval[1] > 1440 ) {
 					$interval[1] = 1440;
@@ -317,8 +358,13 @@ class bpfwpBusinessHours {
 				$record = array(
 					'@type'  => 'OpeningHoursSpecification',
 					'opens'  => self::clock( $interval[0] ),
-					'closes' => self::schema_close( $interval ),
+					'closes' => $display ? self::clock( $interval[1] % 1440 ) : self::schema_close( $interval ),
 				);
+				if ( $display ) {
+					$record['closed']    = ! $intervals;
+					$record['overnight'] = $interval[1] > 1440;
+					$record['origins']   = $day['origins'];
+				}
 				if ( $start ) {
 					$record['validFrom'] = $start;
 				}
@@ -327,7 +373,7 @@ class bpfwpBusinessHours {
 				}
 				$merged = false;
 				foreach ( $result as &$existing ) {
-					if ( $start && isset( $existing['validThrough'] ) && self::shift_date( $existing['validThrough'], 1 ) === $start && $existing['opens'] === $record['opens'] && $existing['closes'] === $record['closes'] ) {
+					if ( $start && isset( $existing['validThrough'] ) && self::shift_date( $existing['validThrough'], 1 ) === $start && $existing['opens'] === $record['opens'] && $existing['closes'] === $record['closes'] && ( ! $display || ( $existing['closed'] === $record['closed'] && $existing['overnight'] === $record['overnight'] && $existing['origins'] === $record['origins'] ) ) ) {
 						if ( $end ) {
 							$existing['validThrough'] = $end;
 						} else {

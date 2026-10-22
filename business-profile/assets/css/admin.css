@@ -404,9 +404,148 @@ NEW DASHBOARD
 .business-profile_page_bpfwp-settings .bpfwp-admin-header-menu,
 .post-type-schema .bpfwp-admin-header-menu,
 .post-type-location .bpfwp-admin-header-menu,
-.business-profile_page_bpfwp-custom-fields .bpfwp-admin-header-menu {
+.business-profile_page_bpfwp-custom-fields .bpfwp-admin-header-menu,
+.business-profile_page_bpfwp-schema-ownership .bpfwp-admin-header-menu,
+.business-profile_page_fspph-bpfwp-bulk-hours .bpfwp-admin-header-menu,
+.admin_page_fspph-bpfwp-bulk-hours .bpfwp-admin-header-menu {
   margin-left: -20px;
   width: calc(100% + 20px);
+}
+
+/* Recovery screens keep the plugin header flush with the admin content edge. */
+.business-profile_page_bpfwp-schema-ownership #wpcontent,
+.business-profile_page_fspph-bpfwp-bulk-hours #wpcontent,
+.admin_page_fspph-bpfwp-bulk-hours #wpcontent {
+  background: #fff;
+}
+.business-profile_page_bpfwp-schema-ownership #wpbody-content,
+.business-profile_page_fspph-bpfwp-bulk-hours #wpbody-content,
+.admin_page_fspph-bpfwp-bulk-hours #wpbody-content {
+  background: #fff;
+  min-height: 100vh;
+}
+.bpfwp-recovery-screen,
+#fspph-bpfwp-bulk-hours {
+  clear: both;
+  padding: 12px 20px 32px 0;
+  overflow-wrap: anywhere;
+}
+.bpfwp-recovery-rule,
+#fspph-bulk-results section {
+  border-top: 1px solid #dcdcde;
+  margin-top: 20px;
+  padding: 12px 0;
+}
+.bpfwp-recovery-rule pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 12px;
+  background: #f6f7f7;
+}
+.bpfwp-recovery-rule form,
+#fspph-bpfwp-bulk-hours form,
+#fspph-bulk-periods {
+  margin: 16px 0;
+}
+#fspph-bpfwp-bulk-hours .bpfwp-bulk-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#fspph-bpfwp-bulk-hours .bpfwp-bulk-label {
+  flex: 0 0 160px;
+}
+#fspph-bpfwp-bulk-hours input:not([type="checkbox"]),
+#fspph-bpfwp-bulk-hours select,
+#fspph-bpfwp-bulk-hours .button,
+.bpfwp-recovery-screen select,
+.bpfwp-recovery-screen .button {
+  box-sizing: border-box;
+  min-height: 40px;
+  height: auto;
+  max-width: 100%;
+  vertical-align: middle;
+}
+#fspph-bpfwp-bulk-hours select { height: 40px; line-height: 1.5; }
+#fspph-bpfwp-bulk-hours .button { white-space: normal; }
+#fspph-bulk-periods label {
+  margin: 12px 0;
+}
+#fspph-bulk-periods > div + div {
+  border-top: 1px solid #dcdcde;
+  margin-top: 16px;
+}
+.business-profile_page_bpfwp-dashboard .bpfwp-license-status.bpfwp-dashboard-new-widget-box {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.bpfwp-license-status > summary.bpfwp-dashboard-new-widget-box-top {
+  display: block;
+  box-sizing: border-box;
+  float: none;
+  width: 100%;
+  cursor: pointer;
+  list-style: none;
+}
+.bpfwp-license-status > summary::-webkit-details-marker { display: none; }
+.bpfwp-license-status > summary:focus-visible,
+.bpfwp-license-status .bpfwp-license-replacement > summary:focus-visible {
+  outline: 2px solid #2271b1;
+  outline-offset: -2px;
+}
+.bpfwp-license-status-caret {
+  float: right;
+  border: 5px solid transparent;
+  border-top-color: currentColor;
+  transform: translateY(5px);
+}
+.bpfwp-license-status[open] .bpfwp-license-status-caret {
+  border-top-color: transparent;
+  border-bottom-color: currentColor;
+  transform: translateY(-1px);
+}
+.bpfwp-license-status > .bpfwp-dashboard-new-widget-box-bottom {
+  box-sizing: border-box;
+  float: none;
+  width: 100%;
+}
+.bpfwp-license-status dl {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  gap: 8px 16px;
+}
+.bpfwp-license-status dt { font-weight: 600; }
+.bpfwp-license-status dd { margin: 0; }
+.bpfwp-license-status form { margin: 16px 0; }
+.bpfwp-license-replacement form,
+.bpfwp-license-replacement label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.bpfwp-license-replacement input,
+.bpfwp-license-replacement .button { min-height: 40px; max-width: 100%; }
+.business-profile_page_bpfwp-dashboard .fsp-premium-helper-dashboard-key-widget-input,
+.business-profile_page_bpfwp-dashboard .fsp-premium-helper-dashboard-key-widget-submit {
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+  line-height: normal;
+}
+@media screen and (max-width: 782px) {
+  .business-profile_page_bpfwp-schema-ownership .bpfwp-admin-header-menu,
+  .business-profile_page_fspph-bpfwp-bulk-hours .bpfwp-admin-header-menu,
+  .admin_page_fspph-bpfwp-bulk-hours .bpfwp-admin-header-menu {
+    margin-left: -10px;
+    width: calc(100% + 10px);
+  }
+  .bpfwp-license-status dl { display: block; }
+  .bpfwp-license-status dd { margin-bottom: 12px; }
+  #fspph-bpfwp-bulk-hours .bpfwp-bulk-label { flex-basis: 100%; }
 }
 .bpfwp-admin-header-menu .nav-tab-wrapper, .wrap .bpfwp-admin-header-menu h2.nav-tab-wrapper {
   border-bottom: 0 !important;

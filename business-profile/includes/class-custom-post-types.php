@@ -48,6 +48,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 		// ID for the current field, if any, being outputted
 		public $field_id;
+		private $hours_result = null;
 
 		/**
 		 * Register hooks
@@ -60,6 +61,7 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 			$this->run_locations = $run_locations;
 
 			add_action( 'init', array( $this, 'load_cpts' ) );
+			add_filter( 'redirect_post_location', array( $this, 'hours_editor_response' ), 10, 2 );
 			add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 			add_action( 'add_meta_boxes', array( $this, 'add_field_modes_box' ) );
 			add_action( 'edit_form_after_title', array( $this, 'add_meta_nonce' ) );
@@ -70,6 +72,33 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 			add_action( 'save_post_' . $this->schema_cpt_slug, array( $this, 'save_schema_meta' ) );
 
 			add_action( 'wp_ajax_bpfwp_get_schema_fields', array( $this, 'get_schema_fields' ) );
+			add_action( 'admin_menu', array( $this, 'schema_create_menu' ), 11 );
+			add_action( 'admin_menu', array( $this, 'location_create_menu' ), 11 );
+		}
+
+		/** Core otherwise associates post-new.php with the ordinary Posts menu. */
+		public function schema_create_menu() {
+			add_submenu_page(
+				'bpfwp-business-profile',
+				__( 'Add New Schema', 'business-profile' ),
+				__( 'Add New Schema', 'business-profile' ),
+				'manage_options',
+				'post-new.php?post_type=' . $this->schema_cpt_slug
+			);
+		}
+
+		/** Keep the location creation route under the same administrator menu. */
+		public function location_create_menu() {
+			if ( ! $this->run_locations || ! post_type_exists( $this->location_cpt_slug ) ) {
+				return;
+			}
+			add_submenu_page(
+				'bpfwp-business-profile',
+				__( 'Add New Location', 'business-profile' ),
+				__( 'Add New Location', 'business-profile' ),
+				'manage_options',
+				'post-new.php?post_type=' . $this->location_cpt_slug
+			);
 		}
 
 		/**
@@ -80,24 +109,24 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return void
 		 */
 		public function load_cpts() {
-			
+
 			// Define the location custom post type.
 			$args = array(
-				'labels' => array(
-					'name'               => __( 'Locations',                   'business-profile' ),
-					'singular_name'      => __( 'Location',                    'business-profile' ),
-					'menu_name'          => __( 'Locations',                   'business-profile' ),
-					'name_admin_bar'     => __( 'Locations',                   'business-profile' ),
-					'add_new'            => __( 'Add New',                 	   'business-profile' ),
-					'add_new_item'       => __( 'Add New Location',            'business-profile' ),
-					'edit_item'          => __( 'Edit Location',               'business-profile' ),
-					'new_item'           => __( 'New Location',                'business-profile' ),
-					'view_item'          => __( 'View Location',               'business-profile' ),
-					'view_items'         => __( 'View Locations',              'business-profile' ),
-					'search_items'       => __( 'Search Locations',            'business-profile' ),
-					'not_found'          => __( 'No locations found',          'business-profile' ),
+				'labels'       => array(
+					'name'               => __( 'Locations', 'business-profile' ),
+					'singular_name'      => __( 'Location', 'business-profile' ),
+					'menu_name'          => __( 'Locations', 'business-profile' ),
+					'name_admin_bar'     => __( 'Locations', 'business-profile' ),
+					'add_new'            => __( 'Add New', 'business-profile' ),
+					'add_new_item'       => __( 'Add New Location', 'business-profile' ),
+					'edit_item'          => __( 'Edit Location', 'business-profile' ),
+					'new_item'           => __( 'New Location', 'business-profile' ),
+					'view_item'          => __( 'View Location', 'business-profile' ),
+					'view_items'         => __( 'View Locations', 'business-profile' ),
+					'search_items'       => __( 'Search Locations', 'business-profile' ),
+					'not_found'          => __( 'No locations found', 'business-profile' ),
 					'not_found_in_trash' => __( 'No locations found in trash', 'business-profile' ),
-					'all_items'          => __( 'Locations',               'business-profile' ),
+					'all_items'          => __( 'Locations', 'business-profile' ),
 				),
 				'public'       => true,
 				'show_in_menu' => 'bpfwp-business-profile',
@@ -110,30 +139,40 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 			// Create filter so addons can modify the arguments.
 			$args = apply_filters( 'bpfwp_location_cpt_args', $args );
+			// Locations are site-wide business settings, with the same administration floor as schemas.
+			// Core still maps individual reads so private locations require read_private_posts.
+			$args['map_meta_cap']         = true;
+			$args['capabilities']         = array_fill_keys(
+				array( 'edit_posts', 'edit_others_posts', 'publish_posts', 'read_private_posts', 'delete_posts', 'delete_private_posts', 'delete_published_posts', 'delete_others_posts', 'edit_private_posts', 'edit_published_posts', 'create_posts' ),
+				'manage_options'
+			);
+			$args['capabilities']['read'] = 'read';
 
 			// Register the post type.
-			if ( $this->run_locations ) { register_post_type( $this->location_cpt_slug, $args ); }
+			if ( $this->run_locations ) {
+				register_post_type( $this->location_cpt_slug, $args );
+			}
 
 			// Define the schema custom post type.
 			$args = array(
-				'labels' => array(
-					'name'               => __( 'Schemas',                   'business-profile' ),
-					'singular_name'      => __( 'Schema',                    'business-profile' ),
-					'menu_name'          => __( 'Schemas',                   'business-profile' ),
-					'name_admin_bar'     => __( 'Schemas',                   'business-profile' ),
-					'add_new'            => __( 'Add New',                 	   'business-profile' ),
-					'add_new_item'       => __( 'Add New Schema',            'business-profile' ),
-					'edit_item'          => __( 'Edit Schema',               'business-profile' ),
-					'new_item'           => __( 'New Schema',                'business-profile' ),
-					'view_item'          => __( 'View Schema',               'business-profile' ),
-					'view_items'         => __( 'View Schemas',              'business-profile' ),
-					'search_items'       => __( 'Search Schemas',            'business-profile' ),
-					'not_found'          => __( 'No schemas found',          'business-profile' ),
+				'labels'       => array(
+					'name'               => __( 'Schemas', 'business-profile' ),
+					'singular_name'      => __( 'Schema', 'business-profile' ),
+					'menu_name'          => __( 'Schemas', 'business-profile' ),
+					'name_admin_bar'     => __( 'Schemas', 'business-profile' ),
+					'add_new'            => __( 'Add New', 'business-profile' ),
+					'add_new_item'       => __( 'Add New Schema', 'business-profile' ),
+					'edit_item'          => __( 'Edit Schema', 'business-profile' ),
+					'new_item'           => __( 'New Schema', 'business-profile' ),
+					'view_item'          => __( 'View Schema', 'business-profile' ),
+					'view_items'         => __( 'View Schemas', 'business-profile' ),
+					'search_items'       => __( 'Search Schemas', 'business-profile' ),
+					'not_found'          => __( 'No schemas found', 'business-profile' ),
 					'not_found_in_trash' => __( 'No schemas found in trash', 'business-profile' ),
-					'all_items'          => __( 'Schemas',               'business-profile' ),
+					'all_items'          => __( 'Schemas', 'business-profile' ),
 				),
 				'public'       => true,
-				'show_ui'	   => true,
+				'show_ui'      => true,
 				'show_in_menu' => 'bpfwp-business-profile',
 				'show_in_rest' => true,
 				'has_archive'  => true,
@@ -144,6 +183,14 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 			// Create filter so addons can modify the arguments.
 			$args = apply_filters( 'bpfwp_schema_cpt_args', $args );
+			// Schema definitions configure site-wide output. Extensions cannot lower this floor.
+			$args['map_meta_cap']              = false;
+			$args['capabilities']              = array_fill_keys(
+				array( 'edit_post', 'delete_post', 'edit_posts', 'edit_others_posts', 'publish_posts', 'read_private_posts', 'delete_posts', 'delete_private_posts', 'delete_published_posts', 'delete_others_posts', 'edit_private_posts', 'edit_published_posts', 'create_posts' ),
+				'manage_options'
+			);
+			$args['capabilities']['read']      = 'read';
+			$args['capabilities']['read_post'] = 'read';
 
 			// Register the post type.
 			register_post_type( $this->schema_cpt_slug, $args );
@@ -300,6 +347,8 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 
 			if ( $post->post_type === $this->location_cpt_slug ) {
 				wp_nonce_field( 'bpfwp_location_meta', 'bpfwp_location_meta_nonce' );
+				$snapshot = bpfwpLocationHoursMutation::snapshot( $post->ID );
+				echo '<input type="hidden" name="bpfwp-hours-fingerprint" value="' . esc_attr( $snapshot['editor_fingerprint'] ) . '">';
 			}
 
 			if ( $post->post_type === $this->schema_cpt_slug ) {
@@ -1094,10 +1143,21 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @param  int $post_id The current post ID.
 		 * @return int $post_id The current post ID.
 		 */
+		/** Complete the core metabox save with its own receipt, after all post-save hooks ran. */
+		public function hours_editor_response( $location, $post_id ) {
+			if ( isset( $_GET['meta-box-loader'] ) && null !== $this->hours_result && get_post_type( $post_id ) === $this->location_cpt_slug && current_user_can( 'edit_post', $post_id ) && wp_verify_nonce( $_POST['bpfwp_location_meta_nonce'] ?? '', 'bpfwp_location_meta' ) ) {
+				if ( is_wp_error( $this->hours_result ) ) {
+					wp_send_json_error( array( 'message' => $this->hours_result->get_error_message() ), 409 );
+				}
+				wp_send_json_success( array( 'fingerprint' => $this->hours_result['after']['editor_fingerprint'] ) );
+			}
+			return $location;
+		}
 		public function save_location_meta( $post_id ) {
 			global $bpfwp_controller;
 
-			if ( ! isset( $_POST['bpfwp_location_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_location_meta_nonce'] ), 'bpfwp_location_meta' ) ) { // Input var okay.
+			if ( ! isset( $_POST['bpfwp_location_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_location_meta_nonce'] ), 'bpfwp_location_meta' ) ) {
+				// Input var okay.
 				return $post_id;
 			}
 
@@ -1112,9 +1172,11 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 			if ( get_post_type( $post_id ) !== $this->location_cpt_slug || wp_is_post_revision( $post_id ) ) {
 				return $post_id;
 			}
+			$hours_changes = array();
 			if ( isset( $_POST['bpfwp-field-modes'] ) ) {
-				bpfwpBusinessData::save_modes( $post_id, wp_unslash( $_POST['bpfwp-field-modes'] ) );
+				$hours_changes['submitted_modes'] = wp_unslash( $_POST['bpfwp-field-modes'] );
 			}
+			$hours_error = false;
 
 			$post_meta = array(
 				'schema_type'             => 'sanitize_text_field',
@@ -1151,54 +1213,87 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 				if ( in_array( $key, array( 'opening_hours', 'exceptions' ), true ) ) {
 					$check = bpfwpSettingsMutation::validate_schedule( array( 'opening_hours' === $key ? 'opening-hours' : 'exceptions' => wp_unslash( $_POST[ $key ] ) ) );
 					if ( is_wp_error( $check ) ) {
+						$hours_error        = true;
+						$this->hours_result = $check;
 						set_transient( 'bpfwp_schema_error_' . get_current_user_id(), $check->get_error_message(), 60 );
 						continue;
 					}
 				}
 				$new = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) ); // Input var okay.
+				if ( in_array( $key, array( 'opening_hours', 'exceptions', 'disable_main_exceptions' ), true ) ) {
+					$hours_changes[ $key ] = $new;
+					continue;
+				}
 
 				if ( $new !== $cur ) {
 					update_post_meta( $post_id, $key, $new );
 				}
 			}
 
-			$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
-
-			$custom_field_values = get_post_meta( $post_id, 'custom_field_values', true );
-			$custom_field_values = is_array( $custom_field_values ) ? $custom_field_values : array();
-
-			foreach ( $custom_fields as $custom_field ) {
-
-				$input_name = 'bpfwp-custom-field-' . $custom_field->id;
-				if ( ! isset( $_POST[ $input_name ] ) && empty( $_FILES[ $input_name ]['name'] ) ) {
-					if ( 'checkbox' !== $custom_field->type || empty( $_POST['bpfwp-custom-fields-present'] ) ) {
-						continue;
-					}
-					$_POST[ $input_name ] = array();
+			if ( $hours_changes && ! $hours_error ) {
+				$fingerprint        = $_POST['bpfwp-hours-fingerprint'] ?? null;
+				$result             = is_string( $fingerprint ) && preg_match( '/^[a-f0-9]{64}$/D', $fingerprint ) ? bpfwpLocationHoursMutation::write( $post_id, $hours_changes, $fingerprint, null, null, true ) : new WP_Error( 'bpfwp_hours_reload', __( 'Reload the location editor before saving hours or field modes. Previous hours were retained.', 'business-profile' ) );
+				$this->hours_result = $result;
+				if ( is_wp_error( $result ) ) {
+					set_transient( 'bpfwp_schema_error_' . get_current_user_id(), $result->get_error_message(), 60 );
 				}
+			}
+			$custom_lock = bpfwpPremiumCapabilities::acquire( 'custom_fields' );
+			if ( is_wp_error( $custom_lock ) ) {
+				return $post_id;
+			}
+			try {
+				$custom_fields = bpfwp_decode_infinite_table_setting( $bpfwp_controller->settings->get_setting( 'custom-fields' ) );
 
-				if ( $custom_field->type == 'file' ) {
+				$custom_rows = bpfwpPremiumCapabilities::location_custom_fields( $post_id );
+				if ( count( $custom_rows ) > 1 ) {
+					return $post_id;
+				}
+				$custom_expected     = $custom_rows[0] ?? null;
+				$custom_field_values = null === $custom_expected ? array() : maybe_unserialize( $custom_expected['meta_value'] );
+				$custom_field_values = is_array( $custom_field_values ) ? $custom_field_values : array();
 
-					if ( empty( $_FILES[ $input_name ]['name'] ) ) {
+				foreach ( $custom_fields as $custom_field ) {
 
-						$field_value = sanitize_text_field( $_POST[ $input_name ] );
+					$input_name = 'bpfwp-custom-field-' . $custom_field->id;
+					if ( ! isset( $_POST[ $input_name ] ) && empty( $_FILES[ $input_name ]['name'] ) ) {
+						if ( 'checkbox' !== $custom_field->type || empty( $_POST['bpfwp-custom-fields-present'] ) ) {
+							continue;
+						}
+						$_POST[ $input_name ] = array();
+					}
+
+					if ( $custom_field->type == 'file' ) {
+
+						if ( empty( $_FILES[ $input_name ]['name'] ) ) {
+
+							$field_value = sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) );
+						} else {
+
+							if ( ! current_user_can( 'upload_files' ) ) {
+								return $post_id;
+							}
+							$uploaded_file = wp_handle_upload( $_FILES[ $input_name ], array( 'test_form' => false ) );
+							if ( ! isset( $uploaded_file['url'] ) ) {
+								return $post_id;
+							}
+							$field_value = $uploaded_file['url'];
+						}
+					} elseif ( 'checkbox' === $custom_field->type ) {
+
+						$field_value = ( isset( $_POST[ $input_name ] ) and is_array( $_POST[ $input_name ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $input_name ] ) ) : array();
 					} else {
 
-						$uploaded_file = wp_handle_upload( $_FILES[ $input_name ], array( 'test_form' => false ) );
-						$field_value   = $uploaded_file['url'];
+						$field_value = sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) );
 					}
-				} elseif ( 'checkbox' === $custom_field->type ) {
 
-					$field_value = ( isset( $_POST[ $input_name ] ) and is_array( $_POST[ $input_name ] ) ) ? array_map( 'sanitize_text_field', $_POST[ $input_name ] ) : array();
-				} else {
-
-					$field_value = sanitize_text_field( $_POST[ $input_name ] );
+					$custom_field_values[ $custom_field->id ] = $field_value;
 				}
 
-				$custom_field_values[ $custom_field->id ] = $field_value;
+				bpfwpPremiumCapabilities::save_location_custom_fields( $post_id, $custom_expected, $custom_field_values );
+			} finally {
+				bpfwpPremiumCapabilities::release();
 			}
-
-			update_post_meta( $post_id, 'custom_field_values', $custom_field_values );
 
 			return $post_id;
 		}
@@ -1213,10 +1308,14 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @return int $post_id The current post ID.
 		 */
 		public function save_schema_meta( $post_id ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return $post_id;
+			}
 			if ( get_post_type( $post_id ) !== $this->schema_cpt_slug || wp_is_post_revision( $post_id ) ) {
 				return $post_id;
 			}
-			if ( ! isset( $_POST['bpfwp_schema_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_schema_meta_nonce'] ), 'bpfwp_schema_meta' ) ) { // Input var okay.
+			if ( ! isset( $_POST['bpfwp_schema_meta_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['bpfwp_schema_meta_nonce'] ), 'bpfwp_schema_meta' ) ) {
+				// Input var okay.
 				return $post_id;
 			}
 
@@ -1244,14 +1343,16 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 			$post_meta_array = array();
 			foreach ( $post_meta as $key => $sanitizer ) {
 
-				if ( ! isset( $_POST[ $key ] ) ) { // Input var okay.
+				if ( ! isset( $_POST[ $key ] ) ) {
+					// Input var okay.
 					$_POST[ $key ] = '';
 				}
 
 				if ( is_array( $_POST[ $key ] ) ) {
 					$value = array_map( $sanitizer, wp_unslash( $_POST[ $key ] ) );
 				} else {
-					$value = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) ); } // Input var okay.
+					$value = call_user_func( $sanitizer, wp_unslash( $_POST[ $key ] ) );
+				} // Input var okay.
 
 				$post_meta_array[ $key ] = $value;
 			}
@@ -1350,7 +1451,9 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @access public
 		 */
 		public function get_schema_fields() {
-
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( array( 'message' => __( 'You cannot administer schema definitions.', 'business-profile' ) ), 403 );
+			}
 		}
 
 		/**
@@ -1359,7 +1462,10 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @since  2.0.0
 		 * @access public
 		 */
-		public function print_helper_box_select() { 
+		public function print_helper_box_select() {
+			if ( ! current_user_can( 'manage_options' ) || ! bpfwpPremiumCapabilities::allowed( 'schema_default_helpers' ) ) {
+				return;
+			}
 
 			?>
 			<div class="bpfwp-schema-defaults-helper-container">
@@ -1388,6 +1494,9 @@ if ( ! class_exists( 'bpfwpCustomPostTypes', false ) ) :
 		 * @param  array $options The functions, options or metas that should be displayed.
 		 */
 		public function print_helper_options( $operation, $options ) {
+			if ( ! current_user_can( 'manage_options' ) || ! bpfwpPremiumCapabilities::allowed( 'schema_default_helpers' ) ) {
+				return;
+			}
 			require_once BPFWP_PLUGIN_DIR . '/includes/class-schema-source-policy.php';
 			foreach ( $options as $option ) {
 				if ( ! isset( $option['value'] ) || ! bpfwpSchemaSourcePolicy::is_registered( $operation . ' ' . $option['value'] ) ) {
